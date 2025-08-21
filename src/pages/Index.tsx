@@ -5,8 +5,42 @@ import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 
 const Index = () => {
+  const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedTool, setSelectedTool] = useState('pen');
   const [activeSection, setActiveSection] = useState('main');
+
+  const subjects = [
+    {
+      id: 'chemistry-sanya',
+      title: 'Химия с Саньком',
+      description: 'Углубленное изучение химии для старших классов и подготовки к ЕГЭ',
+      icon: 'Atom',
+      color: 'from-green-500 to-green-600',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+      teacher: 'Александр'
+    },
+    {
+      id: 'biology',
+      title: 'Биология',
+      description: 'Изучение биологических процессов и подготовка к экзаменам',
+      icon: 'Microscope',
+      color: 'from-blue-500 to-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      teacher: 'Преподаватель биологии'
+    },
+    {
+      id: 'chemistry-oge',
+      title: 'Химия ОГЭ',
+      description: 'Целенаправленная подготовка к ОГЭ по химии для 9 класса',
+      icon: 'FlaskConical',
+      color: 'from-purple-500 to-purple-600',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-200',
+      teacher: 'Специалист ОГЭ'
+    }
+  ];
 
   const navigationItems = [
     { id: 'main', title: 'Главная', icon: 'Home' },
@@ -24,15 +58,118 @@ const Index = () => {
     { id: 'comment', icon: 'MessageSquare', title: 'Комментарий' }
   ];
 
+  const getCurrentSubject = () => subjects.find(s => s.id === selectedSubject);
+
+  // Если не выбран предмет, показываем выбор предметов
+  if (!selectedSubject) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+        {/* Хедер */}
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Icon name="GraduationCap" size={32} className="text-white" />
+              </div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">Образовательная платформа</h1>
+              <p className="text-xl text-gray-600">Выберите предмет для изучения</p>
+            </div>
+          </div>
+        </header>
+
+        {/* Выбор предметов */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {subjects.map((subject) => (
+              <Card 
+                key={subject.id}
+                className={`cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 ${subject.bgColor} ${subject.borderColor} border-2`}
+                onClick={() => setSelectedSubject(subject.id)}
+              >
+                <CardHeader className="text-center pb-4">
+                  <div className={`w-20 h-20 bg-gradient-to-r ${subject.color} rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg`}>
+                    <Icon name={subject.icon as any} size={36} className="text-white" />
+                  </div>
+                  <CardTitle className="text-2xl font-bold">{subject.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <p className="text-gray-600 mb-4 leading-relaxed">{subject.description}</p>
+                  <div className="flex items-center justify-center space-x-2 mb-4">
+                    <Icon name="User" size={16} className="text-gray-500" />
+                    <span className="text-sm text-gray-500">{subject.teacher}</span>
+                  </div>
+                  <Button className={`w-full bg-gradient-to-r ${subject.color} hover:shadow-lg`}>
+                    Начать изучение
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Дополнительная информация */}
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="text-center">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-green-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <Icon name="Users" size={24} className="text-white" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Для всех уровней</h3>
+                <p className="text-gray-600 text-sm">От базового до углубленного изучения</p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <Icon name="BookOpen" size={24} className="text-white" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Интерактивное обучение</h3>
+                <p className="text-gray-600 text-sm">Современные методы преподавания</p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-purple-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <Icon name="Trophy" size={24} className="text-white" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Результат гарантирован</h3>
+                <p className="text-gray-600 text-sm">Проверенные методики подготовки</p>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+
+        {/* Подвал */}
+        <footer className="bg-white border-t mt-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="text-center">
+              <p className="text-gray-600">© 2024 Образовательная платформа. Все права защищены.</p>
+              <p className="text-sm text-gray-500 mt-2">Изучайте науки с лучшими преподавателями! 🧪🔬</p>
+            </div>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
+  const currentSubject = getCurrentSubject();
+
   const renderMainContent = () => {
     switch (activeSection) {
       case 'lessons':
         return (
           <div className="space-y-6">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">Обучение</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-bold text-gray-900">Обучение - {currentSubject?.title}</h2>
+              <Badge variant="outline" className="text-green-600 border-green-600">
+                {currentSubject?.teacher}
+              </Badge>
+            </div>
             
-            {/* Валентные и внешние электроны - стиль из скриншота */}
-            <Card className="border-2 border-green-500 bg-gradient-to-br from-green-50 to-white">
+            {/* Контент в зависимости от предмета */}
+            {selectedSubject === 'chemistry-sanya' && (
+              <Card className="border-2 border-green-500 bg-gradient-to-br from-green-50 to-white">
               <CardHeader className="bg-green-500 text-white rounded-t-lg">
                 <CardTitle className="text-xl font-semibold">Валентные и внешние электроны</CardTitle>
               </CardHeader>
@@ -128,7 +265,7 @@ const Index = () => {
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-bold text-gray-900">Задания</h2>
+              <h2 className="text-3xl font-bold text-gray-900">Задания - {currentSubject?.title}</h2>
               <Badge variant="outline" className="text-green-600 border-green-600">
                 Система проверки активна
               </Badge>
@@ -192,43 +329,72 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* Пример развернутого задания */}
-            <Card className="border-2 border-dashed border-blue-500 bg-blue-50">
+            {/* Пример задания в зависимости от предмета */}
+            <Card className={`border-2 border-dashed ${currentSubject?.borderColor} ${currentSubject?.bgColor}`}>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Задание 2: Валентные электроны (Развернутое)</span>
-                  <Badge variant="secondary">Развернутое</Badge>
+                <CardTitle>
+                  Задание 1: {selectedSubject === 'chemistry-sanya' ? 'Электронные конфигурации (Углубленный уровень)' :
+                              selectedSubject === 'biology' ? 'Строение клетки' :
+                              'Периодическая система (ОГЭ)'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-gray-700 font-medium">
-                  Определите количество валентных электронов для следующих элементов и объясните свой ответ:
-                </p>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <p className="font-semibold">Элементы для анализа:</p>
-                    <ol className="list-decimal list-inside space-y-1 text-sm">
-                      <li>Натрий (Na) - 11 электронов</li>
-                      <li>Хлор (Cl) - 17 электронов</li>
-                      <li>Железо (Fe) - 26 электронов</li>
+                {selectedSubject === 'chemistry-sanya' && (
+                  <div>
+                    <p className="text-gray-700 font-medium mb-4">
+                      Определите количество валентных электронов и возможные степени окисления для элементов:
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1 text-sm mb-4">
+                      <li>Хром (Cr) - 24 электрона</li>
+                      <li>Марганец (Mn) - 25 электронов</li>
                       <li>Медь (Cu) - 29 электронов</li>
                     </ol>
                   </div>
-                  <div className="bg-white p-4 rounded-lg border-2 border-dashed border-gray-300 min-h-[200px]">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm text-gray-600">Область для решения</p>
-                      <div className="flex items-center space-x-2">
-                        <Icon name={tools.find(t => t.id === selectedTool)?.icon as any} size={16} className="text-green-600" />
-                        <span className="text-sm font-medium text-green-600">
-                          {tools.find(t => t.id === selectedTool)?.title}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-400 italic">
-                      Здесь студент может писать развернутое решение с выбранным инструментом...
+                )}
+
+                {selectedSubject === 'biology' && (
+                  <div>
+                    <p className="text-gray-700 font-medium mb-4">
+                      Сравните строение растительной и животной клетки:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-sm mb-4">
+                      <li>Укажите общие органоиды</li>
+                      <li>Назовите различия в строении</li>
+                      <li>Объясните функциональные особенности</li>
+                    </ul>
+                  </div>
+                )}
+
+                {selectedSubject === 'chemistry-oge' && (
+                  <div>
+                    <p className="text-gray-700 font-medium mb-4">
+                      В каком периоде и группе находится элемент с зарядом ядра +17?
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      {['2 период, VII группа', '3 период, VII группа', '2 период, V группа', '3 период, V группа'].map((option, index) => (
+                        <Button key={index} variant="outline" className="justify-start text-left">
+                          {option}
+                        </Button>
+                      ))}
                     </div>
                   </div>
+                )}
+
+                <div className="bg-white p-4 rounded-lg border-2 border-dashed border-gray-300 min-h-[150px]">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm text-gray-600">Область для решения</p>
+                    <div className="flex items-center space-x-2">
+                      <Icon name={tools.find(t => t.id === selectedTool)?.icon as any} size={16} className="text-green-600" />
+                      <span className="text-sm font-medium text-green-600">
+                        {tools.find(t => t.id === selectedTool)?.title}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-400 italic">
+                    Здесь студент может писать решение с выбранным инструментом...
+                  </div>
                 </div>
+
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline">Сохранить черновик</Button>
                   <Button>Отправить на проверку</Button>
@@ -455,20 +621,20 @@ const Index = () => {
       default:
         return (
           <div className="space-y-8">
-            {/* Герой-секция */}
-            <div className="text-center py-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl text-white relative overflow-hidden">
+            {/* Герой-секция для выбранного предмета */}
+            <div className={`text-center py-16 bg-gradient-to-br ${currentSubject?.color} rounded-2xl text-white relative overflow-hidden`}>
               <div className="relative z-10">
                 <div className="w-16 h-16 bg-white/20 rounded-full mx-auto mb-6 flex items-center justify-center">
-                  <Icon name="Atom" size={32} className="text-white" />
+                  <Icon name={currentSubject?.icon as any} size={32} className="text-white" />
                 </div>
-                <h1 className="text-5xl md:text-6xl font-bold mb-4">Химия с Саней</h1>
-                <p className="text-xl md:text-2xl mb-8 text-green-100">Изучайте химию легко и эффективно</p>
+                <h1 className="text-5xl md:text-6xl font-bold mb-4">{currentSubject?.title}</h1>
+                <p className="text-xl md:text-2xl mb-8 text-white/90">{currentSubject?.description}</p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button 
                     size="lg" 
                     variant="secondary"
                     onClick={() => setActiveSection('lessons')}
-                    className="bg-white text-green-600 hover:bg-gray-100"
+                    className="bg-white/90 text-gray-800 hover:bg-white"
                   >
                     <Icon name="BookOpen" size={20} className="mr-2" />
                     Начать обучение
@@ -477,14 +643,13 @@ const Index = () => {
                     size="lg" 
                     variant="outline"
                     onClick={() => setActiveSection('tasks')}
-                    className="border-white text-white hover:bg-white/10"
+                    className="border-white/50 text-white hover:bg-white/10"
                   >
                     <Icon name="ClipboardList" size={20} className="mr-2" />
-                    Попробовать задания
+                    Перейти к заданиям
                   </Button>
                 </div>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-blue-500/20"></div>
             </div>
 
             {/* Основные разделы */}
@@ -592,19 +757,30 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Навигация */}
+      {/* Навигация с возможностью вернуться к выбору предметов */}
       <nav className="bg-white border-b-2 border-green-500 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                <Icon name="Atom" size={24} className="text-white" />
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setSelectedSubject('')}
+                className="mr-2"
+              >
+                <Icon name="ArrowLeft" size={16} />
+              </Button>
+              <div className={`w-10 h-10 bg-gradient-to-r ${currentSubject?.color} rounded-lg flex items-center justify-center`}>
+                <Icon name={currentSubject?.icon as any} size={24} className="text-white" />
               </div>
-              <span className="font-bold text-xl text-gray-900">ChemWithSanya</span>
+              <div>
+                <span className="font-bold text-xl text-gray-900">{currentSubject?.title}</span>
+                <div className="text-xs text-gray-500">{currentSubject?.teacher}</div>
+              </div>
             </div>
             
             <div className="hidden lg:flex space-x-1">
-              {navigationItems.map((item) => (
+              {navigationItems.slice(0, 3).map((item) => (
                 <Button
                   key={item.id}
                   variant={activeSection === item.id ? "default" : "ghost"}
@@ -617,12 +793,6 @@ const Index = () => {
                 </Button>
               ))}
             </div>
-
-            <div className="lg:hidden">
-              <Button variant="outline" size="sm">
-                <Icon name="Menu" size={16} />
-              </Button>
-            </div>
           </div>
         </div>
       </nav>
@@ -630,7 +800,7 @@ const Index = () => {
       {/* Мобильная навигация */}
       <div className="lg:hidden bg-white border-b border-gray-200 shadow-sm">
         <div className="flex overflow-x-auto px-4 py-2 space-x-2 scrollbar-hide">
-          {navigationItems.map((item) => (
+          {navigationItems.slice(0, 3).map((item) => (
             <Button
               key={item.id}
               variant={activeSection === item.id ? "default" : "ghost"}
@@ -655,11 +825,11 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center space-x-2">
-              <Icon name="Atom" size={20} className="text-green-500" />
-              <span className="font-bold text-lg">ChemWithSanya</span>
+              <Icon name="GraduationCap" size={20} className="text-green-500" />
+              <span className="font-bold text-lg">Образовательная платформа</span>
             </div>
-            <p className="text-gray-600">© 2024 ChemWithSanya. Все права защищены.</p>
-            <p className="text-sm text-gray-500">Изучайте химию с удовольствием! 🧪</p>
+            <p className="text-gray-600">© 2024 Все права защищены.</p>
+            <p className="text-sm text-gray-500">Изучайте науки с лучшими преподавателями! 🧪🔬📚</p>
           </div>
         </div>
       </footer>
