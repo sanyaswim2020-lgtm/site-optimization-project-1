@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import Icon from '@/components/ui/icon';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('subjects');
-  const [selectedSubject, setSelectedSubject] = useState('');
+  const navigate = useNavigate();
 
   const subjects = [
     {
@@ -52,55 +53,47 @@ const Index = () => {
   ];
 
   const navigationItems = [
-    { id: 'subjects', title: 'Предметы', icon: 'BookOpen' },
-    { id: 'schedule', title: 'Расписание', icon: 'Calendar' },
-    { id: 'tasks', title: 'Задания', icon: 'ClipboardList' },
-    { id: 'achievements', title: 'Достижения', icon: 'Trophy' },
-    { id: 'profile', title: 'Профиль', icon: 'User' }
+    { id: 'subjects', title: 'Мои предметы', icon: 'BookOpen' },
+    { id: 'contacts', title: 'Контакты', icon: 'Phone' },
+    { id: 'about', title: 'О нас', icon: 'Info' },
+    { id: 'reviews', title: 'Отзывы', icon: 'MessageSquare' }
   ];
 
-  const recentLessons = [
+  const reviews = [
     {
       id: 1,
-      subject: 'Химия с Саньком',
-      title: 'Периодическая система элементов',
-      status: 'completed',
-      date: '2024-12-18',
-      score: 95
+      name: 'Анна Петрова',
+      grade: '11 класс',
+      text: 'Химия с Саньком помогла мне разобраться в сложных темах. Теперь химия - мой любимый предмет!',
+      rating: 5,
+      subject: 'Химия с Саньком'
     },
     {
       id: 2,
-      subject: 'Биология',
-      title: 'Клеточное строение организмов',
-      status: 'in-progress',
-      date: '2024-12-19',
-      score: null
+      name: 'Михаил Сидоров',
+      grade: '9 класс',
+      text: 'Отличная подготовка к ОГЭ по химии. Результат превзошел ожидания!',
+      rating: 5,
+      subject: 'Химия ОГЭ'
     },
     {
       id: 3,
-      subject: 'Химия ОГЭ',
-      title: 'Решение задач на растворы',
-      status: 'pending',
-      date: '2024-12-20',
-      score: null
+      name: 'Елена Васильева',
+      grade: '10 класс',
+      text: 'Биология стала понятнее благодаря интерактивным урокам и отличным объяснениям.',
+      rating: 4,
+      subject: 'Биология'
     }
-  ];
-
-  const achievements = [
-    { id: 1, title: 'Первый урок', icon: 'Star', unlocked: true },
-    { id: 2, title: 'Неделя обучения', icon: 'Calendar', unlocked: true },
-    { id: 3, title: 'Отличник', icon: 'Award', unlocked: false },
-    { id: 4, title: 'Химик-эксперт', icon: 'FlaskConical', unlocked: false }
   ];
 
   const SubjectsView = () => (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Мои предметы</h2>
-        <Button variant="outline">
-          <Icon name="Plus" size={16} className="mr-2" />
-          Добавить предмет
-        </Button>
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">Образовательная платформа</h2>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          Изучайте естественные науки с лучшими преподавателями. 
+          Интерактивные уроки, персональный подход и отслеживание прогресса.
+        </p>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -135,9 +128,9 @@ const Index = () => {
               
               <Button 
                 className="w-full mt-4" 
-                onClick={() => setSelectedSubject(subject.id)}
+                onClick={() => navigate(`/subject/${subject.id}`)}
               >
-                Продолжить обучение
+                Перейти к обучению
               </Button>
             </CardContent>
           </Card>
@@ -146,208 +139,180 @@ const Index = () => {
     </div>
   );
 
-  const ScheduleView = () => (
+  const ContactsView = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Расписание</h2>
+      <h2 className="text-2xl font-bold text-gray-900">Контакты</h2>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Свяжитесь с нами</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <Icon name="Mail" size={20} className="text-blue-600" />
+              <span>info@eduplatform.ru</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Icon name="Phone" size={20} className="text-green-600" />
+              <span>+7 (999) 123-45-67</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Icon name="MapPin" size={20} className="text-red-600" />
+              <span>Москва, ул. Образования, 15</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Icon name="Clock" size={20} className="text-purple-600" />
+              <span>Пн-Пт: 9:00-18:00</span>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Напишите нам</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Имя</label>
+                <input 
+                  type="text" 
+                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Ваше имя"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Email</label>
+                <input 
+                  type="email" 
+                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="your@email.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Сообщение</label>
+                <textarea 
+                  rows={4}
+                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Ваше сообщение..."
+                />
+              </div>
+              <Button className="w-full">Отправить</Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  const AboutView = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900">О нас</h2>
+      
+      <div className="space-y-8">
+        <Card>
+          <CardContent className="p-8">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Icon name="GraduationCap" size={32} className="text-white" />
+              </div>
+              <h3 className="text-2xl font-semibold mb-4">Наша миссия</h3>
+              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                Сделать качественное образование доступным для каждого ученика. 
+                Мы создаем интерактивную среду обучения, где сложные науки становятся понятными и увлекательными.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Сегодня, 19 декабря</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentLessons.map((lesson) => (
-                  <div key={lesson.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-3 h-3 rounded-full ${
-                        lesson.status === 'completed' ? 'bg-green-500' :
-                        lesson.status === 'in-progress' ? 'bg-yellow-500' : 'bg-gray-300'
-                      }`}></div>
-                      <div>
-                        <p className="font-medium">{lesson.title}</p>
-                        <p className="text-sm text-gray-600">{lesson.subject}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      {lesson.score && (
-                        <Badge variant="secondary">{lesson.score}%</Badge>
-                      )}
-                      <Button size="sm" variant={lesson.status === 'completed' ? 'outline' : 'default'}>
-                        {lesson.status === 'completed' ? 'Повторить' : 
-                         lesson.status === 'in-progress' ? 'Продолжить' : 'Начать'}
-                      </Button>
-                    </div>
-                  </div>
+            <CardContent className="p-6 text-center">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Icon name="Users" size={24} className="text-green-600" />
+              </div>
+              <h4 className="font-semibold mb-2">Опытные преподаватели</h4>
+              <p className="text-gray-600 text-sm">
+                Наши учителя имеют многолетний опыт и используют современные методики обучения
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Icon name="Lightbulb" size={24} className="text-blue-600" />
+              </div>
+              <h4 className="font-semibold mb-2">Интерактивный подход</h4>
+              <p className="text-gray-600 text-sm">
+                Используем современные технологии для создания увлекательных уроков
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Icon name="Target" size={24} className="text-purple-600" />
+              </div>
+              <h4 className="font-semibold mb-2">Результативность</h4>
+              <p className="text-gray-600 text-sm">
+                Отслеживаем прогресс и помогаем достигать учебных целей
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+
+  const ReviewsView = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900">Отзывы учеников</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {reviews.map((review) => (
+          <Card key={review.id}>
+            <CardContent className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  {review.name.split(' ').map(n => n[0]).join('')}
+                </div>
+                <div className="ml-3">
+                  <h4 className="font-semibold">{review.name}</h4>
+                  <p className="text-sm text-gray-600">{review.grade}</p>
+                </div>
+              </div>
+              
+              <div className="flex mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <Icon 
+                    key={i}
+                    name="Star" 
+                    size={16} 
+                    className={i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'} 
+                  />
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Статистика недели</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">7</div>
-                  <div className="text-sm text-gray-600">уроков завершено</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">4.2ч</div>
-                  <div className="text-sm text-gray-600">времени обучения</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-purple-600">89%</div>
-                  <div className="text-sm text-gray-600">средняя оценка</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-
-  const TasksView = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Задания</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Активные задания</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="p-3 border rounded-lg">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium">Решить 10 задач по химии</h4>
-                  <Badge variant="destructive">Срок: завтра</Badge>
-                </div>
-                <p className="text-sm text-gray-600 mb-2">Задачи на молярность растворов</p>
-                <Progress value={60} className="h-2" />
-                <p className="text-xs text-gray-500 mt-1">6/10 завершено</p>
-              </div>
               
-              <div className="p-3 border rounded-lg">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium">Изучить клеточное деление</h4>
-                  <Badge variant="secondary">3 дня</Badge>
-                </div>
-                <p className="text-sm text-gray-600 mb-2">Митоз и мейоз</p>
-                <Progress value={25} className="h-2" />
-                <p className="text-xs text-gray-500 mt-1">1/4 завершено</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Завершенные задания</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="p-3 border rounded-lg bg-green-50">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-medium">Периодическая система</h4>
-                    <p className="text-sm text-gray-600">Оценка: 95%</p>
-                  </div>
-                  <Icon name="CheckCircle" size={20} className="text-green-600" />
-                </div>
-              </div>
+              <p className="text-gray-700 mb-3">{review.text}</p>
               
-              <div className="p-3 border rounded-lg bg-green-50">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-medium">Органические соединения</h4>
-                    <p className="text-sm text-gray-600">Оценка: 88%</p>
-                  </div>
-                  <Icon name="CheckCircle" size={20} className="text-green-600" />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-
-  const AchievementsView = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Достижения</h2>
-      
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {achievements.map((achievement) => (
-          <Card key={achievement.id} className={`text-center ${achievement.unlocked ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50'}`}>
-            <CardContent className="p-4">
-              <div className={`inline-flex p-3 rounded-full mb-2 ${achievement.unlocked ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-200 text-gray-400'}`}>
-                <Icon name={achievement.icon} size={24} />
-              </div>
-              <h4 className={`font-medium ${achievement.unlocked ? 'text-gray-900' : 'text-gray-500'}`}>
-                {achievement.title}
-              </h4>
-              {achievement.unlocked && (
-                <Badge variant="secondary" className="mt-2">Получено!</Badge>
-              )}
+              <Badge variant="outline">{review.subject}</Badge>
             </CardContent>
           </Card>
         ))}
       </div>
-    </div>
-  );
-
-  const ProfileView = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Профиль</h2>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
-              АП
-            </div>
-            <h3 className="font-semibold text-lg">Анна Петрова</h3>
-            <p className="text-gray-600">Ученица 10 класса</p>
-            <Badge variant="secondary" className="mt-2">Уровень: Продвинутый</Badge>
-          </CardContent>
-        </Card>
-        
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Общая статистика</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">23</div>
-                  <div className="text-sm text-gray-600">Урока завершено</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">89%</div>
-                  <div className="text-sm text-gray-600">Средняя оценка</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">15.3ч</div>
-                  <div className="text-sm text-gray-600">Время обучения</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-600">4</div>
-                  <div className="text-sm text-gray-600">Достижения</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <Card className="mt-8">
+        <CardContent className="p-8 text-center">
+          <h3 className="text-xl font-semibold mb-4">Поделитесь своим опытом</h3>
+          <p className="text-gray-600 mb-6">
+            Ваши отзывы помогают нам становиться лучше и мотивируют других учеников
+          </p>
+          <Button>Оставить отзыв</Button>
+        </CardContent>
+      </Card>
     </div>
   );
 
@@ -355,14 +320,12 @@ const Index = () => {
     switch (activeSection) {
       case 'subjects':
         return <SubjectsView />;
-      case 'schedule':
-        return <ScheduleView />;
-      case 'tasks':
-        return <TasksView />;
-      case 'achievements':
-        return <AchievementsView />;
-      case 'profile':
-        return <ProfileView />;
+      case 'contacts':
+        return <ContactsView />;
+      case 'about':
+        return <AboutView />;
+      case 'reviews':
+        return <ReviewsView />;
       default:
         return <SubjectsView />;
     }
