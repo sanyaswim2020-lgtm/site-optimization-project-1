@@ -32,6 +32,14 @@ export default {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))'
 				},
+				chemistry: {
+					green: '#22C55E',
+					'green-dark': '#16A34A',
+					'green-light': '#1F2937',
+					gray: '#F8FAF7',
+					'gray-light': '#F8FAFC',
+					white: '#FFFFFF'
+				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))'
