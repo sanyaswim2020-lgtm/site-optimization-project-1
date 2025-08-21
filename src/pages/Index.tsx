@@ -22,7 +22,8 @@ const Index = () => {
       teacher: 'Александр',
       progress: 65,
       lessons: 24,
-      completedLessons: 16
+      completedLessons: 16,
+      logoUrl: 'https://cdn.poehali.dev/files/24f93e50-2115-481e-939f-89bb8ce5f7b5.png'
     },
     {
       id: 'biology',
@@ -102,7 +103,15 @@ const Index = () => {
             <CardHeader className={`${subject.bgColor} rounded-t-lg`}>
               <div className="flex items-center justify-between">
                 <div className={`p-2 rounded-lg bg-gradient-to-r ${subject.color} text-white`}>
-                  <Icon name={subject.icon} size={24} />
+                  {subject.logoUrl ? (
+                    <img 
+                      src={subject.logoUrl} 
+                      alt={subject.title}
+                      className="w-6 h-6 object-contain"
+                    />
+                  ) : (
+                    <Icon name={subject.icon} size={24} />
+                  )}
                 </div>
                 <Badge variant="secondary">{subject.teacher}</Badge>
               </div>

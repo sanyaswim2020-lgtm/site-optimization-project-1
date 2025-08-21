@@ -1,14 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import Icon from '@/components/ui/icon';
 import LessonPlayer from '@/components/LessonPlayer';
+import LoginModal from '@/components/LoginModal';
+import TaskChecker from '@/components/TaskChecker';
+import { useParams } from 'react-router-dom';
 
 const Subject = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [selectedLesson, setSelectedLesson] = useState(null);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const { subjectId } = useParams();
+
+  useEffect(() => {
+    // Проверяем авторизацию при загрузке
+    const authKey = `auth_${subjectId}`;
+    const isLoggedIn = localStorage.getItem(authKey) === 'true';
+    
+    if (isLoggedIn) {
+      setIsAuthenticated(true);
+    } else {
+      setShowLoginModal(true);
+    }
+  }, [subjectId]);
+
+  const handleLogin = (username: string, password: string) => {
+    // Сохраняем состояние авторизации
+    const authKey = `auth_${subjectId}`;
+    localStorage.setItem(authKey, 'true');
+    localStorage.setItem(`user_${subjectId}`, username);
+    
+    setIsAuthenticated(true);
+    setShowLoginModal(false);
+  };
+
+  const handleLogout = () => {
+    const authKey = `auth_${subjectId}`;
+    localStorage.removeItem(authKey);
+    localStorage.removeItem(`user_${subjectId}`);
+    
+    setIsAuthenticated(false);
+    setShowLoginModal(true);
+  };
 
   // Mock data for chemistry subject
   const subjectData = {
@@ -323,7 +361,13 @@ const Subject = () => {
                   <Progress value={task.progress} className="h-2 mb-2" />
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500">{task.progress}% выполнено</span>
-                    <Button size="sm">Продолжить</Button>
+                    <div className="flex space-x-2">
+                      <Button size="sm" variant="outline" onClick={() => setSelectedTask(task)}>
+                        <Icon name="PenTool" size={14} className="mr-1" />
+                        Проверить
+                      </Button>
+                      <Button size="sm">Продолжить</Button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -504,6 +548,23 @@ const Subject = () => {
     );
   }
 
+  if (selectedTask) {
+    return (
+      <TaskChecker
+        taskId={selectedTask.id.toString()}
+        taskTitle={selectedTask.title}
+        taskContent={`Задание: ${selectedTask.title}\n\nОписание: ${selectedTask.title === 'Решить 10 задач по периодичности' 
+          ? 'Решите задачи на определение периодичности элементов и их свойств.\n\n1. Определите период и группу элемента с атомным номером 19\n2. Сравните радиусы атомов Li, Na, K\n3. Объясните изменение электроотрицательности в периоде\n4. Какой элемент имеет большую энергию ионизации: Be или B?\n5. Расположите элементы по возрастанию металлических свойств: Mg, Al, Si' 
+          : 'Изучите процессы клеточного деления и их особенности.\n\nТемы для изучения:\n- Митоз: фазы и их характеристика\n- Мейоз: особенности процесса\n- Различия между митозом и мейозом\n- Биологическое значение клеточного деления'}`}
+        onComplete={(score, feedback) => {
+          console.log(`Задание "${selectedTask.title}" оценено на ${score}%: ${feedback}`);
+          setSelectedTask(null);
+        }}
+        onBack={() => setSelectedTask(null)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -534,6 +595,10 @@ const Subject = () => {
               </div>
               <Button variant="ghost" size="sm">
                 <Icon name="Settings" size={18} />
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <Icon name="LogOut" size={16} className="mr-1" />
+                Выйти
               </Button>
             </div>
           </div>
@@ -568,8 +633,30 @@ const Subject = () => {
           </main>
         </div>
       </div>
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={showLoginModal && !isAuthenticated}
+        onClose={() => window.history.back()}
+        onLogin={handleLogin}
+        subjectTitle={subjectData.title}
+      />
     </div>
   );
+
+  // Показываем только модальное окно входа, если пользователь не авторизован
+  if (!isAuthenticated) {
+    return (
+      <>
+        <LoginModal
+          isOpen={true}
+          onClose={() => window.history.back()}
+          onLogin={handleLogin}
+          subjectTitle={subjectData.title}
+        />
+      </>
+    );
+  }
 };
 
 export default Subject;
