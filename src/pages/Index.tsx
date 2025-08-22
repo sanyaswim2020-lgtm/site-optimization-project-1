@@ -55,9 +55,26 @@ const Index = () => {
 
   const navigationItems = [
     { id: 'subjects', title: 'Мои предметы', icon: 'BookOpen' },
+    { id: 'minicourses', title: 'Мини-курсы', icon: 'Zap' },
     { id: 'contacts', title: 'Контакты', icon: 'Phone' },
     { id: 'about', title: 'О нас', icon: 'Info' },
     { id: 'reviews', title: 'Отзывы', icon: 'MessageSquare' }
+  ];
+
+  const miniCourses = [
+    {
+      id: 'quantum-leap',
+      title: 'Квантовый скачок',
+      description: 'Интенсивный курс по квантовой физике и химии для подготовки к олимпиадам',
+      duration: '2 недели',
+      stages: 8,
+      completedStages: 0,
+      difficulty: 'Продвинутый',
+      color: 'from-indigo-500 to-purple-600',
+      bgColor: 'bg-indigo-50',
+      borderColor: 'border-indigo-200',
+      icon: 'Zap'
+    }
   ];
 
   const reviews = [
@@ -325,10 +342,74 @@ const Index = () => {
     </div>
   );
 
+  const MiniCoursesView = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">Мини-курсы</h2>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          Интенсивные курсы для углубленного изучения сложных тем. 
+          Быстрый путь к экспертизе в выбранной области.
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {miniCourses.map((course) => (
+          <Card key={course.id} className={`${course.bgColor} ${course.borderColor} border-2 hover:shadow-lg transition-all duration-300 cursor-pointer`}
+                onClick={() => navigate(`/minicourse/${course.id}`)}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${course.color} flex items-center justify-center`}>
+                  <Icon name={course.icon} size={24} className="text-white" />
+                </div>
+                <Badge variant="secondary">{course.difficulty}</Badge>
+              </div>
+              <CardTitle className="text-xl mb-2">{course.title}</CardTitle>
+              <p className="text-gray-600 text-sm">{course.description}</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Прогресс</span>
+                  <span className="font-medium">{course.completedStages}/{course.stages} этапов</span>
+                </div>
+                <Progress value={(course.completedStages / course.stages) * 100} className="h-2" />
+                
+                <div className="flex justify-between items-center pt-2">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Icon name="Clock" size={16} className="mr-1" />
+                    {course.duration}
+                  </div>
+                  <Button size="sm" className={`bg-gradient-to-r ${course.color} hover:opacity-90`}>
+                    {course.completedStages === 0 ? 'Начать' : 'Продолжить'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="mt-8">
+        <CardContent className="p-8 text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Icon name="Plus" size={32} className="text-white" />
+          </div>
+          <h3 className="text-xl font-semibold mb-4">Создать свой мини-курс</h3>
+          <p className="text-gray-600 mb-6">
+            Загружайте свои материалы и создавайте уникальные образовательные программы
+          </p>
+          <Button variant="outline">Начать создание</Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'subjects':
         return <SubjectsView />;
+      case 'minicourses':
+        return <MiniCoursesView />;
       case 'contacts':
         return <ContactsView />;
       case 'about':
