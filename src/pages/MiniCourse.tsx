@@ -14,7 +14,17 @@ interface VideoStage {
   id: string;
   type: 'video';
   title: string;
-  videoUrl?: string;
+  videos: {
+    id: string;
+    title: string;
+    url?: string;
+    files: {
+      id: string;
+      name: string;
+      url: string;
+      type: string;
+    }[];
+  }[];
   description: string;
   duration: string;
 }
@@ -47,7 +57,14 @@ const MiniCourse = () => {
       title: 'Введение в квантовую механику',
       description: 'Основные принципы и концепции квантовой физики',
       duration: '15 мин',
-      videoUrl: ''
+      videos: [
+        {
+          id: 'v1',
+          title: 'Основы квантовой механики',
+          url: '',
+          files: []
+        }
+      ]
     },
     {
       id: '2',
@@ -69,27 +86,67 @@ const MiniCourse = () => {
   ]);
 
   const [testAnswers, setTestAnswers] = useState<Record<string, number>>({});
-  const [newVideo, setNewVideo] = useState({ title: '', description: '', duration: '' });
+  const [newVideo, setNewVideo] = useState({ 
+    title: '', 
+    description: '', 
+    duration: '',
+    videos: [{ id: '1', title: 'Видео 1', url: '', files: [] }]
+  });
   const [newTest, setNewTest] = useState({
     title: '',
     questions: [{ question: '', options: ['', '', ''], correctAnswer: 0 }]
   });
 
-  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>, videoIndex: number) => {
     const file = event.target.files?.[0];
     if (file) {
       const videoUrl = URL.createObjectURL(file);
-      const newStage: VideoStage = {
-        id: `video-${Date.now()}`,
-        type: 'video',
-        title: newVideo.title || 'Новое видео',
-        description: newVideo.description || 'Описание видео',
-        duration: newVideo.duration || '10 мин',
-        videoUrl
-      };
-      setCourseData([...courseData, newStage]);
-      setNewVideo({ title: '', description: '', duration: '' });
+      const updatedVideos = [...newVideo.videos];
+      updatedVideos[videoIndex] = { ...updatedVideos[videoIndex], url: videoUrl };
+      setNewVideo({ ...newVideo, videos: updatedVideos });
     }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, videoIndex: number) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const fileUrl = URL.createObjectURL(file);
+      const updatedVideos = [...newVideo.videos];
+      const newFile = {
+        id: `file-${Date.now()}`,
+        name: file.name,
+        url: fileUrl,
+        type: file.type
+      };
+      updatedVideos[videoIndex].files.push(newFile);
+      setNewVideo({ ...newVideo, videos: updatedVideos });
+    }
+  };
+
+  const addVideoToStage = () => {
+    const newVideoId = `v${newVideo.videos.length + 1}`;
+    setNewVideo({
+      ...newVideo,
+      videos: [...newVideo.videos, { id: newVideoId, title: `Видео ${newVideo.videos.length + 1}`, url: '', files: [] }]
+    });
+  };
+
+  const createVideoStage = () => {
+    const newStage: VideoStage = {
+      id: `video-${Date.now()}`,
+      type: 'video',
+      title: newVideo.title || 'Новый этап',
+      description: newVideo.description || 'Описание этапа',
+      duration: newVideo.duration || '15 мин',
+      videos: newVideo.videos.filter(v => v.title.trim() !== '')
+    };
+    setCourseData([...courseData, newStage]);
+    setNewVideo({ 
+      title: '', 
+      description: '', 
+      duration: '',
+      videos: [{ id: '1', title: 'Видео 1', url: '', files: [] }]
+    });
   };
 
   const addTestStage = () => {
@@ -211,23 +268,49 @@ const MiniCourse = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="mb-4">
-                      {currentStageData.videoUrl ? (
-                        <video
-                          controls
-                          className="w-full rounded-lg"
-                          src={currentStageData.videoUrl}
-                        >
-                          Ваш браузер не поддерживает видео.
-                        </video>
-                      ) : (
-                        <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <div className="text-center">
-                            <Icon name="Video" size={48} className="mx-auto mb-2 text-gray-400" />
-                            <p className="text-gray-500">Видео не загружено</p>
+                    <div className="space-y-6">
+                      {currentStageData.videos.map((video, index) => (
+                        <div key={video.id} className="border rounded-lg p-4">
+                          <h3 className="font-semibold mb-3">{video.title}</h3>
+                          <div className="mb-4">
+                            {video.url ? (
+                              <video
+                                controls
+                                className="w-full rounded-lg"
+                                src={video.url}
+                              >
+                                Ваш браузер не поддерживает видео.
+                              </video>
+                            ) : (
+                              <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <div className="text-center">
+                                  <Icon name="Video" size={32} className="mx-auto mb-2 text-gray-400" />
+                                  <p className="text-sm text-gray-500">Видео не загружено</p>
+                                </div>
+                              </div>
+                            )}
                           </div>
+                          
+                          {video.files.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-sm text-gray-700">Материалы к видео:</h4>
+                              <div className="grid gap-2">
+                                {video.files.map((file) => (
+                                  <a
+                                    key={file.id}
+                                    href={file.url}
+                                    download={file.name}
+                                    className="flex items-center space-x-2 p-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                                  >
+                                    <Icon name="FileDown" size={16} className="text-blue-600" />
+                                    <span className="text-sm text-blue-800">{file.name}</span>
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      ))}
                     </div>
                     <p className="text-gray-700">{currentStageData.description}</p>
                   </CardContent>
@@ -272,56 +355,126 @@ const MiniCourse = () => {
             
             <TabsContent value="admin">
               <div className="space-y-6">
-                {/* Add Video */}
+                {/* Add Video Stage */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                       <Icon name="Video" size={20} />
-                      <span>Добавить видео</span>
+                      <span>Добавить этап с видео</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <Label htmlFor="video-title">Название видео</Label>
+                      <Label htmlFor="stage-title">Название этапа</Label>
                       <Input
-                        id="video-title"
+                        id="stage-title"
                         value={newVideo.title}
                         onChange={(e) => setNewVideo({ ...newVideo, title: e.target.value })}
-                        placeholder="Введите название"
+                        placeholder="Название этапа"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="video-description">Описание</Label>
+                      <Label htmlFor="stage-description">Описание этапа</Label>
                       <Textarea
-                        id="video-description"
+                        id="stage-description"
                         value={newVideo.description}
                         onChange={(e) => setNewVideo({ ...newVideo, description: e.target.value })}
-                        placeholder="Описание видео"
+                        placeholder="Описание этапа"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="video-duration">Продолжительность</Label>
+                      <Label htmlFor="stage-duration">Продолжительность</Label>
                       <Input
-                        id="video-duration"
+                        id="stage-duration"
                         value={newVideo.duration}
                         onChange={(e) => setNewVideo({ ...newVideo, duration: e.target.value })}
                         placeholder="15 мин"
                       />
                     </div>
-                    <div>
-                      <Label>Видеофайл</Label>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="video/*"
-                        onChange={handleVideoUpload}
-                        className="hidden"
-                      />
-                      <Button onClick={() => fileInputRef.current?.click()} className="w-full">
-                        <Icon name="Upload" size={16} className="mr-2" />
-                        Загрузить видео
-                      </Button>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label>Видео в этапе</Label>
+                        <Button onClick={addVideoToStage} variant="outline" size="sm">
+                          <Icon name="Plus" size={16} className="mr-2" />
+                          Добавить видео
+                        </Button>
+                      </div>
+
+                      {newVideo.videos.map((video, index) => (
+                        <div key={video.id} className="border rounded-lg p-4 space-y-3">
+                          <div>
+                            <Label>Название видео {index + 1}</Label>
+                            <Input
+                              value={video.title}
+                              onChange={(e) => {
+                                const updatedVideos = [...newVideo.videos];
+                                updatedVideos[index].title = e.target.value;
+                                setNewVideo({ ...newVideo, videos: updatedVideos });
+                              }}
+                              placeholder="Название видео"
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label>Видеофайл</Label>
+                            <input
+                              type="file"
+                              accept="video/*"
+                              onChange={(e) => handleVideoUpload(e, index)}
+                              className="hidden"
+                              id={`video-upload-${index}`}
+                            />
+                            <Button 
+                              onClick={() => document.getElementById(`video-upload-${index}`)?.click()} 
+                              variant="outline" 
+                              className="w-full"
+                            >
+                              <Icon name="Upload" size={16} className="mr-2" />
+                              {video.url ? 'Изменить видео' : 'Загрузить видео'}
+                            </Button>
+                            {video.url && (
+                              <p className="text-sm text-green-600 mt-1">✓ Видео загружено</p>
+                            )}
+                          </div>
+
+                          <div>
+                            <Label>Файлы к видео</Label>
+                            <input
+                              type="file"
+                              accept="*/*"
+                              onChange={(e) => handleFileUpload(e, index)}
+                              className="hidden"
+                              id={`file-upload-${index}`}
+                            />
+                            <Button 
+                              onClick={() => document.getElementById(`file-upload-${index}`)?.click()} 
+                              variant="outline" 
+                              size="sm" 
+                              className="w-full"
+                            >
+                              <Icon name="Paperclip" size={16} className="mr-2" />
+                              Прикрепить файл
+                            </Button>
+                            {video.files.length > 0 && (
+                              <div className="mt-2 space-y-1">
+                                {video.files.map((file) => (
+                                  <div key={file.id} className="text-sm text-blue-600 flex items-center space-x-1">
+                                    <Icon name="FileText" size={12} />
+                                    <span>{file.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
+
+                    <Button onClick={createVideoStage} className="w-full">
+                      <Icon name="Save" size={16} className="mr-2" />
+                      Создать этап
+                    </Button>
                   </CardContent>
                 </Card>
 
@@ -417,23 +570,49 @@ const MiniCourse = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="mb-4">
-                    {currentStageData.videoUrl ? (
-                      <video
-                        controls
-                        className="w-full rounded-lg"
-                        src={currentStageData.videoUrl}
-                      >
-                        Ваш браузер не поддерживает видео.
-                      </video>
-                    ) : (
-                      <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <div className="text-center">
-                          <Icon name="Video" size={48} className="mx-auto mb-2 text-gray-400" />
-                          <p className="text-gray-500">Видео не загружено</p>
+                  <div className="space-y-6">
+                    {currentStageData.videos.map((video, index) => (
+                      <div key={video.id} className="border rounded-lg p-4">
+                        <h3 className="font-semibold mb-3">{video.title}</h3>
+                        <div className="mb-4">
+                          {video.url ? (
+                            <video
+                              controls
+                              className="w-full rounded-lg"
+                              src={video.url}
+                            >
+                              Ваш браузер не поддерживает видео.
+                            </video>
+                          ) : (
+                            <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <div className="text-center">
+                                <Icon name="Video" size={32} className="mx-auto mb-2 text-gray-400" />
+                                <p className="text-sm text-gray-500">Видео не загружено</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
+                        
+                        {video.files.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-sm text-gray-700">Материалы к видео:</h4>
+                            <div className="grid gap-2">
+                              {video.files.map((file) => (
+                                <a
+                                  key={file.id}
+                                  href={file.url}
+                                  download={file.name}
+                                  className="flex items-center space-x-2 p-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                                >
+                                  <Icon name="FileDown" size={16} className="text-blue-600" />
+                                  <span className="text-sm text-blue-800">{file.name}</span>
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
                   <p className="text-gray-700">{currentStageData.description}</p>
                 </CardContent>
