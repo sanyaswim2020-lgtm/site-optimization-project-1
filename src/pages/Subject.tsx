@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import LessonPlayer from '@/components/LessonPlayer';
 import LoginModal from '@/components/LoginModal';
@@ -15,6 +17,9 @@ const Subject = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingLesson, setEditingLesson] = useState(null);
+  const [lessonData, setLessonData] = useState([]);
   const { subjectId } = useParams();
 
   useEffect(() => {
@@ -65,17 +70,20 @@ const Subject = () => {
     { id: 'schedule', title: 'Расписание', icon: 'Calendar' },
     { id: 'tasks', title: 'Задания', icon: 'ClipboardList' },
     { id: 'achievements', title: 'Достижения', icon: 'Trophy' },
-    { id: 'profile', title: 'Прогресс', icon: 'BarChart3' }
+    { id: 'profile', title: 'Прогресс', icon: 'BarChart3' },
+    { id: 'manage', title: 'Управление', icon: 'Settings' }
   ];
 
-  const lessons = [
+  const [lessons, setLessons] = useState([
     {
       id: 1,
       title: 'Периодическая система элементов',
       status: 'completed',
       duration: 45,
       score: 95,
-      topics: ['Строение атома', 'Периодические свойства']
+      topics: ['Строение атома', 'Периодические свойства'],
+      videos: [],
+      materials: []
     },
     {
       id: 2,
@@ -83,7 +91,9 @@ const Subject = () => {
       status: 'completed',
       duration: 50,
       score: 88,
-      topics: ['Ионная связь', 'Ковалентная связь', 'Металлическая связь']
+      topics: ['Ионная связь', 'Ковалентная связь', 'Металлическая связь'],
+      videos: [],
+      materials: []
     },
     {
       id: 3,
@@ -91,7 +101,9 @@ const Subject = () => {
       status: 'in-progress',
       duration: 60,
       score: null,
-      topics: ['Степень окисления', 'Окислители и восстановители']
+      topics: ['Степень окисления', 'Окислители и восстановители'],
+      videos: [],
+      materials: []
     },
     {
       id: 4,
@@ -99,9 +111,11 @@ const Subject = () => {
       status: 'pending',
       duration: 55,
       score: null,
-      topics: ['Процессы на электродах', 'Законы Фарадея']
+      topics: ['Процессы на электродах', 'Законы Фарадея'],
+      videos: [],
+      materials: []
     }
-  ];
+  ]);
 
   const recentTasks = [
     {
@@ -232,11 +246,53 @@ const Subject = () => {
     </div>
   );
 
+  const handleVideoUpload = (lessonId, videoFile) => {
+    const videoUrl = URL.createObjectURL(videoFile);
+    const updatedLessons = lessons.map(lesson => {
+      if (lesson.id === lessonId) {
+        const newVideo = {
+          id: `video-${Date.now()}`,
+          name: videoFile.name,
+          url: videoUrl,
+          type: videoFile.type
+        };
+        return { ...lesson, videos: [...lesson.videos, newVideo] };
+      }
+      return lesson;
+    });
+    setLessons(updatedLessons);
+  };
+
+  const handleMaterialUpload = (lessonId, materialFile) => {
+    const materialUrl = URL.createObjectURL(materialFile);
+    const updatedLessons = lessons.map(lesson => {
+      if (lesson.id === lessonId) {
+        const newMaterial = {
+          id: `material-${Date.now()}`,
+          name: materialFile.name,
+          url: materialUrl,
+          type: materialFile.type
+        };
+        return { ...lesson, materials: [...lesson.materials, newMaterial] };
+      }
+      return lesson;
+    });
+    setLessons(updatedLessons);
+  };
+
   const LessonsView = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Уроки курса</h2>
         <div className="flex items-center space-x-4">
+          <Button 
+            variant="outline" 
+            onClick={() => setIsEditMode(!isEditMode)}
+            className="mr-4"
+          >
+            <Icon name="Edit" size={16} className="mr-2" />
+            {isEditMode ? 'Завершить редактирование' : 'Редактировать уроки'}
+          </Button>
           <Progress value={subjectData.progress} className="w-32 h-2" />
           <span className="text-sm text-gray-600">{subjectData.progress}%</span>
         </div>
@@ -285,20 +341,80 @@ const Subject = () => {
                     </div>
                   )}
                   
-                  <Button 
-                    variant={lesson.status === 'completed' ? 'outline' : 'default'}
-                    onClick={() => setSelectedLesson(lesson)}
-                  >
-                    {lesson.status === 'completed' ? 'Повторить' :
-                     lesson.status === 'in-progress' ? 'Продолжить' :
-                     'Начать'}
-                  </Button>
+                  <div className="flex items-center space-x-2">
+                    {isEditMode && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setEditingLesson(lesson)}
+                      >
+                        <Icon name="Plus" size={16} className="mr-1" />
+                        Контент
+                      </Button>
+                    )}
+                    <Button 
+                      variant={lesson.status === 'completed' ? 'outline' : 'default'}
+                      onClick={() => setSelectedLesson(lesson)}
+                    >
+                      {lesson.status === 'completed' ? 'Повторить' :
+                       lesson.status === 'in-progress' ? 'Продолжить' :
+                       'Начать'}
+                    </Button>
+                  </div>
                 </div>
               </div>
+              
+              {/* Отображение видео и материалов */}
+              {(lesson.videos.length > 0 || lesson.materials.length > 0) && (
+                <div className="mt-4 pt-4 border-t">
+                  {lesson.videos.length > 0 && (
+                    <div className="mb-3">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Видео:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {lesson.videos.map((video) => (
+                          <div key={video.id} className="flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-full">
+                            <Icon name="Video" size={12} className="text-blue-600" />
+                            <span className="text-xs text-blue-800">{video.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {lesson.materials.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Материалы:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {lesson.materials.map((material) => (
+                          <a
+                            key={material.id}
+                            href={material.url}
+                            download={material.name}
+                            className="flex items-center space-x-2 bg-green-50 px-3 py-1 rounded-full hover:bg-green-100 transition-colors"
+                          >
+                            <Icon name="FileDown" size={12} className="text-green-600" />
+                            <span className="text-xs text-green-800">{material.name}</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
+      
+      {/* Модальное окно для добавления контента */}
+      {editingLesson && (
+        <ContentUploadModal 
+          lesson={editingLesson}
+          onClose={() => setEditingLesson(null)}
+          onVideoUpload={handleVideoUpload}
+          onMaterialUpload={handleMaterialUpload}
+        />
+      )}
     </div>
   );
 
@@ -476,6 +592,109 @@ const Subject = () => {
     </div>
   );
 
+  const ManageView = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Управление курсом</h2>
+      
+      <div className="grid grid-cols-1 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Статистика контента</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">{lessons.length}</div>
+                <div className="text-sm text-gray-600">Всего уроков</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600">
+                  {lessons.reduce((acc, lesson) => acc + lesson.videos.length, 0)}
+                </div>
+                <div className="text-sm text-gray-600">Видео загружено</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-600">
+                  {lessons.reduce((acc, lesson) => acc + lesson.materials.length, 0)}
+                </div>
+                <div className="text-sm text-gray-600">Материалов</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-yellow-600">
+                  {lessons.filter(lesson => lesson.videos.length > 0 || lesson.materials.length > 0).length}
+                </div>
+                <div className="text-sm text-gray-600">С контентом</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Быстрое редактирование</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">Перейдите в раздел "Уроки" и нажмите "Редактировать уроки", чтобы добавлять видео и материалы к каждому уроку.</p>
+            <Button onClick={() => setActiveSection('lessons')}>
+              <Icon name="BookOpen" size={16} className="mr-2" />
+              Перейти к урокам
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  const ContentUploadModal = ({ lesson, onClose, onVideoUpload, onMaterialUpload }) => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Добавить контент</h3>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <Icon name="X" size={16} />
+          </Button>
+        </div>
+        
+        <div className="mb-4">
+          <h4 className="font-medium mb-2">Урок: {lesson.title}</h4>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <Label>Загрузить видео</Label>
+            <input
+              type="file"
+              accept="video/*"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  onVideoUpload(lesson.id, e.target.files[0]);
+                  onClose();
+                }
+              }}
+              className="w-full p-2 border rounded-lg mt-1"
+            />
+          </div>
+          
+          <div>
+            <Label>Загрузить материалы</Label>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.txt,.ppt,.pptx"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  onMaterialUpload(lesson.id, e.target.files[0]);
+                  onClose();
+                }
+              }}
+              className="w-full p-2 border rounded-lg mt-1"
+            />
+            <p className="text-xs text-gray-500 mt-1">Поддерживаемые форматы: PDF, DOC, DOCX, TXT, PPT, PPTX</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'dashboard':
@@ -489,9 +708,11 @@ const Subject = () => {
       case 'achievements':
         return <AchievementsView />;
       case 'profile':
-        return <ProfileView />;
+        return <ProfileView />();
+      case 'manage':
+        return <ManageView />();
       default:
-        return <DashboardView />;
+        return <DashboardView />();
     }
   };
 
