@@ -708,7 +708,7 @@ const Subject = () => {
       case 'achievements':
         return <AchievementsView />;
       case 'profile':
-        return <ProfileView />();
+        return <ProfileView />;
       case 'manage':
         return <ManageView />();
       default:
