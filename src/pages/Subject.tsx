@@ -9,6 +9,7 @@ import Icon from '@/components/ui/icon';
 import LessonPlayer from '@/components/LessonPlayer';
 import LoginModal from '@/components/LoginModal';
 import TaskChecker from '@/components/TaskChecker';
+import ManageView from '@/components/ManageView';
 import { useParams } from 'react-router-dom';
 
 const Subject = () => {
