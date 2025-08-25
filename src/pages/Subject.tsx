@@ -710,7 +710,7 @@ const Subject = () => {
       case 'profile':
         return <ProfileView />;
       case 'manage':
-        return <ManageView />();
+        return <ManageView />;
       default:
         return <DashboardView />();
     }
