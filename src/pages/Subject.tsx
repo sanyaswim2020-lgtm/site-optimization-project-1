@@ -34,7 +34,7 @@ const Subject = () => {
     }
   }, [subjectId]);
 
-  const handleLogin = (username: string, password: string) => {
+  const handleLogin = (username, password) => {
     // Сохраняем состояние авторизации
     const authKey = `auth_${subjectId}`;
     localStorage.setItem(authKey, 'true');
@@ -712,7 +712,7 @@ const Subject = () => {
       case 'manage':
         return <ManageView />;
       default:
-        return <DashboardView />();
+        return <DashboardView />;
     }
   };
 
@@ -726,26 +726,26 @@ const Subject = () => {
       content: [
         {
           id: '1',
-          type: 'text' as const,
+          type: 'text',
           title: 'Введение',
           content: `Добро пожаловать на урок "${selectedLesson.title}"!\n\nВ этом уроке мы изучим: ${selectedLesson.topics.join(', ')}.\n\nПродолжительность урока: ${selectedLesson.duration} минут.`
         },
         {
           id: '2',
-          type: 'video' as const,
+          type: 'video',
           title: 'Основная часть',
           content: 'Теоретический материал по теме урока',
           duration: Math.floor(selectedLesson.duration * 0.6)
         },
         {
           id: '3',
-          type: 'quiz' as const,
+          type: 'quiz',
           title: 'Проверка знаний',
           content: 'Ответьте на вопросы для закрепления материала',
           questions: [
             {
               id: 'q1',
-              type: 'multiple-choice' as const,
+              type: 'multiple-choice',
               question: 'Какое утверждение верно?',
               options: [
                 'Периодическая система содержит 118 элементов',
