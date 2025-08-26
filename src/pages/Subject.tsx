@@ -151,7 +151,7 @@ const Subject = () => {
   const DashboardView = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
+        <Card className={subjectId === 'chemistry-sanya' ? 'bg-white/90 backdrop-blur-sm' : ''}>
           <CardContent className="p-6">
             <div className="flex items-center">
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -195,7 +195,7 @@ const Subject = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className={subjectId === 'chemistry-sanya' ? 'bg-white/90 backdrop-blur-sm' : ''}>
           <CardHeader>
             <CardTitle>Последние уроки</CardTitle>
           </CardHeader>
@@ -284,7 +284,7 @@ const Subject = () => {
   const LessonsView = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Уроки курса</h2>
+        <h2 className={`text-2xl font-bold ${subjectId === 'chemistry-sanya' ? 'text-white' : ''}`}>Уроки курса</h2>
         <div className="flex items-center space-x-4">
           <Button 
             variant="outline" 
@@ -302,6 +302,8 @@ const Subject = () => {
       <div className="grid grid-cols-1 gap-4">
         {lessons.map((lesson) => (
           <Card key={lesson.id} className={`cursor-pointer hover:shadow-lg transition-shadow ${
+            subjectId === 'chemistry-sanya' ? 'bg-white/90 backdrop-blur-sm' : ''
+          } ${
             lesson.status === 'completed' ? 'bg-green-50 border-green-200' :
             lesson.status === 'in-progress' ? 'bg-yellow-50 border-yellow-200' :
             'border-gray-200'
@@ -421,11 +423,11 @@ const Subject = () => {
 
   const ScheduleView = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Расписание занятий</h2>
+      <h2 className={`text-2xl font-bold ${subjectId === 'chemistry-sanya' ? 'text-white' : ''}`}>Расписание занятий</h2>
       
       <div className="grid grid-cols-1 gap-4">
         {weeklySchedule.map((item, index) => (
-          <Card key={index}>
+          <Card key={index} className={subjectId === 'chemistry-sanya' ? 'bg-white/90 backdrop-blur-sm' : ''}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -460,10 +462,10 @@ const Subject = () => {
 
   const TasksView = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Задания</h2>
+      <h2 className={`text-2xl font-bold ${subjectId === 'chemistry-sanya' ? 'text-white' : ''}`}>Задания</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
+        <Card className={subjectId === 'chemistry-sanya' ? 'bg-white/90 backdrop-blur-sm' : ''}>
           <CardHeader>
             <CardTitle>Активные задания</CardTitle>
           </CardHeader>
@@ -518,11 +520,13 @@ const Subject = () => {
 
   const AchievementsView = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Достижения</h2>
+      <h2 className={`text-2xl font-bold ${subjectId === 'chemistry-sanya' ? 'text-white' : ''}`}>Достижения</h2>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {achievements.map((achievement) => (
           <Card key={achievement.id} className={`text-center ${
+            subjectId === 'chemistry-sanya' ? 'bg-white/90 backdrop-blur-sm' : ''
+          } ${
             achievement.unlocked ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50'
           }`}>
             <CardContent className="p-6">
@@ -546,11 +550,11 @@ const Subject = () => {
 
   const ProfileView = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Мой прогресс</h2>
+      <h2 className={`text-2xl font-bold ${subjectId === 'chemistry-sanya' ? 'text-white' : ''}`}>Мой прогресс</h2>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <Card>
+          <Card className={subjectId === 'chemistry-sanya' ? 'bg-white/90 backdrop-blur-sm' : ''}>
             <CardHeader>
               <CardTitle>Статистика обучения</CardTitle>
             </CardHeader>
@@ -595,10 +599,10 @@ const Subject = () => {
 
   const ManageView = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Управление курсом</h2>
+      <h2 className={`text-2xl font-bold ${subjectId === 'chemistry-sanya' ? 'text-white' : ''}`}>Управление курсом</h2>
       
       <div className="grid grid-cols-1 gap-6">
-        <Card>
+        <Card className={subjectId === 'chemistry-sanya' ? 'bg-white/90 backdrop-blur-sm' : ''}>
           <CardHeader>
             <CardTitle>Статистика контента</CardTitle>
           </CardHeader>
@@ -789,27 +793,7 @@ const Subject = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
-      {/* Background Images for Chemistry Course */}
-      {subjectId === 'chemistry-sanya' && (
-        <>
-          {/* Teacher Photo Background */}
-          <div 
-            className="fixed top-0 right-0 w-1/3 h-full bg-cover bg-center opacity-10 z-0"
-            style={{
-              backgroundImage: 'url(https://cdn.poehali.dev/files/f27ba186-5dbd-49ba-944c-ad2d22efc563.jpg)',
-              backgroundRepeat: 'no-repeat'
-            }}
-          />
-          {/* Logo Background */}
-          <div 
-            className="fixed bottom-10 left-10 w-32 h-32 bg-contain bg-center opacity-20 z-0"
-            style={{
-              backgroundImage: 'url(https://cdn.poehali.dev/files/24f93e50-2115-481e-939f-89bb8ce5f7b5.png)',
-              backgroundRepeat: 'no-repeat'
-            }}
-          />
-        </>
-      )}
+
       
       {/* Header */}
       <header className="bg-white border-b border-gray-200 relative z-10">
@@ -820,9 +804,18 @@ const Subject = () => {
                 <Icon name="ArrowLeft" size={18} />
               </Button>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                  <Icon name="Atom" size={24} className="text-white" />
-                </div>
+                {/* Logo for Chemistry Course */}
+                {subjectId === 'chemistry-sanya' ? (
+                  <img 
+                    src="https://cdn.poehali.dev/files/24f93e50-2115-481e-939f-89bb8ce5f7b5.png" 
+                    alt="Химия с Саньком" 
+                    className="w-10 h-10 object-contain"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                    <Icon name="Atom" size={24} className="text-white" />
+                  </div>
+                )}
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">{subjectData.title}</h1>
                   <p className="text-sm text-gray-600">Преподаватель: {subjectData.teacher}</p>
@@ -852,8 +845,18 @@ const Subject = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <div className="flex gap-8">
           {/* Sidebar */}
-          <aside className="w-64 space-y-2">
-            <nav>
+          <aside className="w-64 space-y-2 relative">
+            {/* Teacher Photo Background for Sidebar in Chemistry Course */}
+            {subjectId === 'chemistry-sanya' && (
+              <div 
+                className="absolute inset-0 bg-cover bg-center opacity-15 rounded-lg"
+                style={{
+                  backgroundImage: 'url(https://cdn.poehali.dev/files/f27ba186-5dbd-49ba-944c-ad2d22efc563.jpg)',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              />
+            )}
+            <nav className="relative z-10">
               {navigationItems.map((item) => (
                 <button
                   key={item.id}
@@ -872,8 +875,25 @@ const Subject = () => {
           </aside>
 
           {/* Main Content */}
-          <main className="flex-1 bg-white/80 backdrop-blur-sm rounded-lg p-6">
-            {renderActiveSection()}
+          <main 
+            className="flex-1 rounded-lg p-6 relative"
+            style={{
+              background: subjectId === 'chemistry-sanya' 
+                ? `linear-gradient(135deg, rgba(30, 40, 80, 0.95), rgba(20, 30, 60, 0.95)), url('https://cdn.poehali.dev/files/a3b56f0b-2cae-490d-8925-42fbe72eb8f6.jpeg')`
+                : 'rgba(255, 255, 255, 0.8)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backdropFilter: 'blur(4px)'
+            }}
+          >
+            <div 
+              className="relative z-10"
+              style={{
+                color: subjectId === 'chemistry-sanya' ? '#ffffff' : 'inherit'
+              }}
+            >
+              {renderActiveSection()}
+            </div>
           </main>
         </div>
       </div>
