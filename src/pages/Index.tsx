@@ -185,47 +185,21 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="space-y-8">
-          {reviews.map((review, index) => (
-            <div key={review.id} className={`flex items-center gap-8 ${
-              index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'
-            }`}>
-              {/* Фото */}
-              <div className="flex-shrink-0">
-                <img
-                  src={review.photo}
-                  alt={review.name}
-                  className="w-24 h-24 rounded-lg object-cover border-4 border-white/20"
-                />
-              </div>
-
-              {/* Карточка с отзывом */}
-              <Card className="flex-1 bg-white/90 backdrop-blur-sm max-w-md">
-                <CardContent className="p-6">
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-lg">{review.name}</h4>
-                    <p className="text-sm text-gray-600">{review.grade}</p>
-                  </div>
-                  
-                  <div className="flex mb-3">
-                    {[...Array(5)].map((_, i) => (
-                      <Icon 
-                        key={i}
-                        name="Star" 
-                        size={16} 
-                        className={i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'} 
-                      />
-                    ))}
-                  </div>
-                  
-                  <p className="text-gray-700 mb-3">{review.text}</p>
-                  
-                  <Badge variant="outline">{review.subject}</Badge>
-                </CardContent>
-              </Card>
+        {/* Пустое место для будущих отзывов */}
+        <Card className="bg-white/90 backdrop-blur-sm">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Icon name="MessageSquare" size={32} className="text-white" />
             </div>
-          ))}
-        </div>
+            <h3 className="text-xl font-semibold mb-4">Станьте первым, кто оставит отзыв!</h3>
+            <p className="text-gray-600 mb-6">
+              Поделитесь своим опытом обучения и помогите другим студентам сделать выбор
+            </p>
+            <Button className="bg-gradient-to-r from-blue-500 to-purple-600">
+              Оставить отзыв
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
