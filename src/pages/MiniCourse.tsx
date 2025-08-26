@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -97,6 +97,53 @@ const MiniCourse = () => {
     questions: [{ question: '', options: ['', '', ''], correctAnswer: 0 }]
   });
 
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    if (!courseId) return;
+    
+    const savedCourseData = localStorage.getItem(`minicourse-${courseId}-data`);
+    const savedCurrentStage = localStorage.getItem(`minicourse-${courseId}-stage`);
+    const savedTestAnswers = localStorage.getItem(`minicourse-${courseId}-answers`);
+    
+    if (savedCourseData) {
+      try {
+        setCourseData(JSON.parse(savedCourseData));
+      } catch (e) {
+        console.error('Error loading course data:', e);
+      }
+    }
+    
+    if (savedCurrentStage) {
+      setCurrentStage(parseInt(savedCurrentStage));
+    }
+    
+    if (savedTestAnswers) {
+      try {
+        setTestAnswers(JSON.parse(savedTestAnswers));
+      } catch (e) {
+        console.error('Error loading test answers:', e);
+      }
+    }
+  }, [courseId]);
+
+  // Save course data to localStorage whenever it changes
+  useEffect(() => {
+    if (!courseId || courseData.length === 0) return;
+    localStorage.setItem(`minicourse-${courseId}-data`, JSON.stringify(courseData));
+  }, [courseData, courseId]);
+
+  // Save current stage to localStorage whenever it changes
+  useEffect(() => {
+    if (!courseId) return;
+    localStorage.setItem(`minicourse-${courseId}-stage`, currentStage.toString());
+  }, [currentStage, courseId]);
+
+  // Save test answers to localStorage whenever they change
+  useEffect(() => {
+    if (!courseId || Object.keys(testAnswers).length === 0) return;
+    localStorage.setItem(`minicourse-${courseId}-answers`, JSON.stringify(testAnswers));
+  }, [testAnswers, courseId]);
+
   const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>, videoIndex: number) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -175,6 +222,53 @@ const MiniCourse = () => {
       setCurrentStage(Math.max(0, currentStage - 1));
     } else if (updatedCourseData.length === 0) {
       setCurrentStage(0);
+    }
+  };
+
+  const clearCourseData = () => {
+    if (!courseId) return;
+    if (confirm('Вы уверены, что хотите очистить все данные курса? Это действие нельзя отменить.')) {
+      localStorage.removeItem(`minicourse-${courseId}-data`);
+      localStorage.removeItem(`minicourse-${courseId}-stage`);
+      localStorage.removeItem(`minicourse-${courseId}-answers`);
+      
+      // Reset to default data
+      setCourseData([
+        {
+          id: '1',
+          type: 'video',
+          title: 'Введение в квантовую механику',
+          description: 'Основные принципы и концепции квантовой физики',
+          duration: '15 мин',
+          videos: [
+            {
+              id: 'v1',
+              title: 'Основы квантовой механики',
+              url: '',
+              files: []
+            }
+          ]
+        },
+        {
+          id: '2',
+          type: 'test',
+          title: 'Проверка знаний: Основы квантовой механики',
+          questions: [
+            {
+              id: 'q1',
+              question: 'Что такое квантовое число?',
+              options: [
+                'Число электронов в атоме',
+                'Характеристика энергетического состояния электрона',
+                'Скорость движения электрона'
+              ],
+              correctAnswer: 1
+            }
+          ]
+        }
+      ]);
+      setCurrentStage(0);
+      setTestAnswers({});
     }
   };
 
@@ -640,6 +734,47 @@ const MiniCourse = () => {
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Course Data Management */}
+                <Card className="border-red-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2 text-red-700">
+                      <Icon name="AlertTriangle" size={20} />
+                      <span>Управление данными курса</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div className="flex items-start space-x-3">
+                          <Icon name="Info" size={16} className="text-amber-600 mt-0.5" />
+                          <div className="text-sm text-amber-800">
+                            <p className="font-medium mb-1">Автоматическое сохранение</p>
+                            <p>Все изменения в курсе автоматически сохраняются в браузере. Данные восстанавливаются при обновлении страницы.</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
+                        <div>
+                          <h4 className="font-medium text-red-800">Очистить все данные курса</h4>
+                          <p className="text-sm text-red-600 mt-1">
+                            Удалит все созданные этапы, тесты и прогресс. Действие необратимо.
+                          </p>
+                        </div>
+                        <Button
+                          onClick={clearCourseData}
+                          variant="destructive"
+                          size="sm"
+                          className="ml-4"
+                        >
+                          <Icon name="Trash2" size={16} className="mr-2" />
+                          Очистить данные
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
           </Tabs>
