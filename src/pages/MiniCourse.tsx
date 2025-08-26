@@ -504,7 +504,7 @@ const MiniCourse = () => {
       }}
     >
       {/* Background overlay */}
-      <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm"></div>
+      <div className="absolute inset-0 bg-black bg-opacity-20"></div>
       
       {/* Content wrapper */}
       <div className="relative z-10">
