@@ -866,7 +866,6 @@ const MiniCourse = () => {
                           />
                         </div>
                       </div>
-                      </div>
                     ))}
                     
                     <div className="flex space-x-2">
