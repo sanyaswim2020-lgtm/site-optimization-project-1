@@ -10,6 +10,15 @@ import LessonPlayer from '@/components/LessonPlayer';
 import LoginModal from '@/components/LoginModal';
 import TaskChecker from '@/components/TaskChecker';
 import ManageView from '@/components/ManageView';
+import { TestAssignmentCreator, TestAssignment } from '@/components/assignments/TestAssignment';
+import { OpenAssignmentCreator, OpenAssignment } from '@/components/assignments/OpenAssignment';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { useParams } from 'react-router-dom';
 
 const Subject = () => {
@@ -22,6 +31,12 @@ const Subject = () => {
   const [editingLesson, setEditingLesson] = useState(null);
   const [lessonData, setLessonData] = useState([]);
   const [editingLessonData, setEditingLessonData] = useState({});
+  
+  // Состояния для управления заданиями
+  const [showAssignmentCreator, setShowAssignmentCreator] = useState(false);
+  const [assignmentType, setAssignmentType] = useState<'test' | 'open' | null>(null);
+  const [assignments, setAssignments] = useState<(TestAssignment | OpenAssignment)[]>([]);
+  
   const { subjectId } = useParams();
 
   useEffect(() => {
@@ -53,6 +68,23 @@ const Subject = () => {
     
     setIsAuthenticated(false);
     setShowLoginModal(true);
+  };
+
+  // Функции управления заданиями
+  const handleCreateAssignment = (type: 'test' | 'open') => {
+    setAssignmentType(type);
+    setShowAssignmentCreator(true);
+  };
+
+  const handleSaveAssignment = (assignment: TestAssignment | OpenAssignment) => {
+    setAssignments(prev => [...prev, assignment]);
+    setShowAssignmentCreator(false);
+    setAssignmentType(null);
+  };
+
+  const handleCancelAssignment = () => {
+    setShowAssignmentCreator(false);
+    setAssignmentType(null);
   };
 
   // Mock data for chemistry subject
@@ -649,7 +681,30 @@ const Subject = () => {
 
   const TasksView = () => (
     <div className="space-y-6">
-      <h2 className={`text-2xl font-bold ${subjectId === 'chemistry-sanya' ? 'text-white' : ''}`}>Задания</h2>
+      <div className="flex justify-between items-center">
+        <h2 className={`text-2xl font-bold ${subjectId === 'chemistry-sanya' ? 'text-white' : ''}`}>Задания</h2>
+        
+        {/* Кнопки создания заданий для администраторов */}
+        {isAuthenticated && (
+          <div className="flex space-x-2">
+            <Button 
+              onClick={() => handleCreateAssignment('test')}
+              className="flex items-center space-x-2"
+            >
+              <Icon name="FileQuestion" size={16} />
+              <span>Тестовое задание</span>
+            </Button>
+            <Button 
+              onClick={() => handleCreateAssignment('open')}
+              variant="outline"
+              className="flex items-center space-x-2"
+            >
+              <Icon name="FileEdit" size={16} />
+              <span>Развернутое задание</span>
+            </Button>
+          </div>
+        )}
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className={subjectId === 'chemistry-sanya' ? 'bg-white/90 backdrop-blur-sm' : ''}>
@@ -702,6 +757,69 @@ const Subject = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Отображение созданных заданий */}
+      {assignments.length > 0 && (
+        <Card className={subjectId === 'chemistry-sanya' ? 'bg-white/90 backdrop-blur-sm' : ''}>
+          <CardHeader>
+            <CardTitle>Созданные задания</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {assignments.map((assignment) => (
+                <div key={assignment.id} className="p-4 border rounded-lg">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h4 className="font-medium">{assignment.title}</h4>
+                        <Badge variant={'questions' in assignment ? 'default' : 'secondary'}>
+                          {'questions' in assignment ? 'Тест' : 'Развернутое'}
+                        </Badge>
+                        <Badge variant={assignment.status === 'published' ? 'default' : assignment.status === 'draft' ? 'secondary' : 'destructive'}>
+                          {assignment.status === 'published' ? 'Опубликовано' : assignment.status === 'draft' ? 'Черновик' : 'Закрыто'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600">{assignment.description}</p>
+                      {assignment.deadline && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Дедлайн: {new Date(assignment.deadline).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex space-x-2">
+                      {'questions' in assignment && (
+                        <Badge variant="outline">
+                          {assignment.questions?.length || 0} вопросов
+                        </Badge>
+                      )}
+                      {'maxScore' in assignment && (
+                        <Badge variant="outline">
+                          {assignment.maxScore} баллов
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-500">
+                      Создано: {assignment.createdBy}
+                    </span>
+                    <div className="flex space-x-2">
+                      <Button size="sm" variant="outline">
+                        <Icon name="Edit" size={14} className="mr-1" />
+                        Редактировать
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Icon name="Eye" size={14} className="mr-1" />
+                        Просмотр
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 
@@ -1092,6 +1210,38 @@ const Subject = () => {
         onLogin={handleLogin}
         subjectTitle={subjectData.title}
       />
+
+      {/* Assignment Creation Modals */}
+      <Dialog open={showAssignmentCreator} onOpenChange={() => setShowAssignmentCreator(false)}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {assignmentType === 'test' ? 'Создание тестового задания' : 'Создание развернутого задания'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            {assignmentType === 'test' ? (
+              <TestAssignmentCreator
+                onSave={handleSaveAssignment}
+                onCancel={handleCancelAssignment}
+              />
+            ) : assignmentType === 'open' ? (
+              <OpenAssignmentCreator
+                onSave={handleSaveAssignment}
+                onCancel={handleCancelAssignment}
+              />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* TaskChecker Modal */}
+      {selectedTask && (
+        <TaskChecker
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+        />
+      )}
     </div>
   );
 
