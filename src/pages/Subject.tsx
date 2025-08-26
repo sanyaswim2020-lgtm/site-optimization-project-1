@@ -21,6 +21,7 @@ const Subject = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingLesson, setEditingLesson] = useState(null);
   const [lessonData, setLessonData] = useState([]);
+  const [editingLessonData, setEditingLessonData] = useState({});
   const { subjectId } = useParams();
 
   useEffect(() => {
@@ -323,16 +324,86 @@ const Subject = () => {
                     />
                   </div>
                   
-                  <div>
-                    <h3 className="font-semibold text-lg">{lesson.title}</h3>
-                    <p className="text-gray-600">Урок {lesson.id} • {lesson.duration} мин</p>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {lesson.topics.map((topic, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {topic}
-                        </Badge>
-                      ))}
-                    </div>
+                  <div className="flex-1">
+                    {isEditMode && editingLessonData[lesson.id] ? (
+                      <div className="space-y-2">
+                        <Input 
+                          value={editingLessonData[lesson.id]?.title || lesson.title}
+                          onChange={(e) => setEditingLessonData({
+                            ...editingLessonData,
+                            [lesson.id]: { ...editingLessonData[lesson.id], title: e.target.value }
+                          })}
+                          className="text-lg font-semibold"
+                          placeholder="Название урока"
+                        />
+                        <div className="flex gap-2">
+                          <Input 
+                            type="number"
+                            value={editingLessonData[lesson.id]?.number || lesson.id}
+                            onChange={(e) => setEditingLessonData({
+                              ...editingLessonData,
+                              [lesson.id]: { ...editingLessonData[lesson.id], number: e.target.value }
+                            })}
+                            className="w-20"
+                            placeholder="№"
+                          />
+                          <Input 
+                            type="number"
+                            value={editingLessonData[lesson.id]?.duration || lesson.duration}
+                            onChange={(e) => setEditingLessonData({
+                              ...editingLessonData,
+                              [lesson.id]: { ...editingLessonData[lesson.id], duration: e.target.value }
+                            })}
+                            className="w-24"
+                            placeholder="мин"
+                          />
+                          <Button size="sm" onClick={() => {
+                            // Сохранить изменения
+                            setEditingLessonData({
+                              ...editingLessonData,
+                              [lesson.id]: null
+                            });
+                          }}>
+                            <Icon name="Check" size={16} />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => {
+                            // Отменить изменения
+                            setEditingLessonData({
+                              ...editingLessonData,
+                              [lesson.id]: null
+                            });
+                          }}>
+                            <Icon name="X" size={16} />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-lg">{lesson.title}</h3>
+                          {isEditMode && (
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => setEditingLessonData({
+                                ...editingLessonData,
+                                [lesson.id]: { title: lesson.title, number: lesson.id, duration: lesson.duration }
+                              })}
+                            >
+                              <Icon name="Edit" size={14} />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-gray-600">Урок {lesson.id} • {lesson.duration} мин</p>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {lesson.topics.map((topic, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {topic}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -411,12 +482,128 @@ const Subject = () => {
       
       {/* Модальное окно для добавления контента */}
       {editingLesson && (
-        <ContentUploadModal 
-          lesson={editingLesson}
-          onClose={() => setEditingLesson(null)}
-          onVideoUpload={handleVideoUpload}
-          onMaterialUpload={handleMaterialUpload}
-        />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-2xl bg-white">
+            <CardHeader>
+              <CardTitle>Добавить контент к уроку: {editingLesson.title}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Загрузка видео */}
+              <div>
+                <Label className="text-lg font-semibold mb-3 block">Добавить видео</Label>
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Введите URL видео (YouTube, Vimeo и др.)"
+                      className="flex-1"
+                      id="videoUrl"
+                    />
+                    <Button onClick={() => {
+                      const url = document.getElementById('videoUrl').value;
+                      if (url) {
+                        handleVideoUpload(editingLesson.id, { url, type: 'url' });
+                        document.getElementById('videoUrl').value = '';
+                      }
+                    }}>
+                      Добавить
+                    </Button>
+                  </div>
+                  <div className="text-center text-gray-500">или</div>
+                  <div>
+                    <Input
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          handleVideoUpload(editingLesson.id, file);
+                        }
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Таймкоды */}
+                  <div className="mt-4">
+                    <Label className="text-sm font-medium">Добавить таймкоды (опционально)</Label>
+                    <div className="space-y-2 mt-2">
+                      <div className="flex gap-2">
+                        <Input placeholder="00:00" className="w-20" />
+                        <Input placeholder="Описание момента" className="flex-1" />
+                        <Button size="sm">
+                          <Icon name="Plus" size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Загрузка файлов */}
+              <div>
+                <Label className="text-lg font-semibold mb-3 block">Прикрепить файлы</Label>
+                <Input
+                  type="file"
+                  multiple
+                  onChange={(e) => {
+                    Array.from(e.target.files).forEach(file => {
+                      handleMaterialUpload(editingLesson.id, file);
+                    });
+                  }}
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Поддерживаются: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, и другие
+                </p>
+              </div>
+
+              {/* Текущий контент */}
+              {(editingLesson.videos?.length > 0 || editingLesson.materials?.length > 0) && (
+                <div>
+                  <Label className="text-lg font-semibold mb-3 block">Текущий контент</Label>
+                  {editingLesson.videos?.length > 0 && (
+                    <div className="mb-3">
+                      <h5 className="text-sm font-medium mb-2">Видео:</h5>
+                      <div className="space-y-1">
+                        {editingLesson.videos.map((video) => (
+                          <div key={video.id} className="flex items-center justify-between bg-blue-50 p-2 rounded">
+                            <span className="text-sm">{video.name || 'Видео'}</span>
+                            <Button size="sm" variant="ghost">
+                              <Icon name="Trash" size={14} />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {editingLesson.materials?.length > 0 && (
+                    <div>
+                      <h5 className="text-sm font-medium mb-2">Файлы:</h5>
+                      <div className="space-y-1">
+                        {editingLesson.materials.map((material) => (
+                          <div key={material.id} className="flex items-center justify-between bg-green-50 p-2 rounded">
+                            <span className="text-sm">{material.name}</span>
+                            <Button size="sm" variant="ghost">
+                              <Icon name="Trash" size={14} />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setEditingLesson(null)}>
+                  Закрыть
+                </Button>
+                <Button onClick={() => setEditingLesson(null)}>
+                  Сохранить
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
