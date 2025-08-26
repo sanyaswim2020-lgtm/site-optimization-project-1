@@ -788,9 +788,31 @@ const Subject = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative">
+      {/* Background Images for Chemistry Course */}
+      {subjectId === 'chemistry-sanya' && (
+        <>
+          {/* Teacher Photo Background */}
+          <div 
+            className="fixed top-0 right-0 w-1/3 h-full bg-cover bg-center opacity-10 z-0"
+            style={{
+              backgroundImage: 'url(https://cdn.poehali.dev/files/f27ba186-5dbd-49ba-944c-ad2d22efc563.jpg)',
+              backgroundRepeat: 'no-repeat'
+            }}
+          />
+          {/* Logo Background */}
+          <div 
+            className="fixed bottom-10 left-10 w-32 h-32 bg-contain bg-center opacity-20 z-0"
+            style={{
+              backgroundImage: 'url(https://cdn.poehali.dev/files/24f93e50-2115-481e-939f-89bb8ce5f7b5.png)',
+              backgroundRepeat: 'no-repeat'
+            }}
+          />
+        </>
+      )}
+      
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-gray-200 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
@@ -827,7 +849,7 @@ const Subject = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <div className="flex gap-8">
           {/* Sidebar */}
           <aside className="w-64 space-y-2">
@@ -850,7 +872,7 @@ const Subject = () => {
           </aside>
 
           {/* Main Content */}
-          <main className="flex-1">
+          <main className="flex-1 bg-white/80 backdrop-blur-sm rounded-lg p-6">
             {renderActiveSection()}
           </main>
         </div>

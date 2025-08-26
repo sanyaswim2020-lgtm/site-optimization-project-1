@@ -28,13 +28,13 @@ const Index = () => {
     },
     {
       id: 'biology',
-      title: 'Биология',
+      title: 'Био с C-MaN',
       description: 'Изучение биологических процессов и подготовка к экзаменам',
       icon: 'Microscope',
       color: 'from-blue-500 to-blue-600',
       bgColor: 'bg-blue-50',
       borderColor: 'border-blue-200',
-      teacher: 'Мария Петровна',
+      teacher: 'Семён',
       progress: 45,
       lessons: 20,
       completedLessons: 9
