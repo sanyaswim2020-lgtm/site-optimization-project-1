@@ -88,6 +88,8 @@ const MiniCourse = () => {
   ]);
 
   const [testAnswers, setTestAnswers] = useState<Record<string, number>>({});
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [showExplanation, setShowExplanation] = useState(false);
   const [newVideo, setNewVideo] = useState({ 
     title: '', 
     description: '', 
@@ -346,6 +348,8 @@ const MiniCourse = () => {
     if (currentStage < courseData.length - 1) {
       setCurrentStage(currentStage + 1);
       setTestAnswers({});
+      setCurrentQuestionIndex(0);
+      setShowExplanation(false);
     }
   };
 
@@ -353,6 +357,33 @@ const MiniCourse = () => {
     if (currentStage > 0) {
       setCurrentStage(currentStage - 1);
       setTestAnswers({});
+      setCurrentQuestionIndex(0);
+      setShowExplanation(false);
+    }
+  };
+
+  const handleAnswerQuestion = () => {
+    if (currentStageData && currentStageData.type === 'test') {
+      const currentQuestion = currentStageData.questions[currentQuestionIndex];
+      if (testAnswers[currentQuestion.id] !== undefined) {
+        setShowExplanation(true);
+      }
+    }
+  };
+
+  const nextQuestion = () => {
+    if (currentStageData && currentStageData.type === 'test') {
+      if (currentQuestionIndex < currentStageData.questions.length - 1) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+        setShowExplanation(false);
+      }
+    }
+  };
+
+  const prevQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      setShowExplanation(false);
     }
   };
 
@@ -622,50 +653,86 @@ const MiniCourse = () => {
               ) : (
                 <Card>
                   <CardHeader>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Icon name="HelpCircle" size={20} className="text-blue-600" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Icon name="HelpCircle" size={20} className="text-blue-600" />
+                        </div>
+                        <div>
+                          <CardTitle>{currentStageData.title}</CardTitle>
+                          <p className="text-sm text-gray-600">
+                            Предпросмотр теста (Вопрос {currentQuestionIndex + 1} из {currentStageData.questions.length})
+                          </p>
+                        </div>
                       </div>
-                      <CardTitle>{currentStageData.title}</CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={prevQuestion}
+                          disabled={currentQuestionIndex === 0}
+                        >
+                          <Icon name="ChevronLeft" size={16} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={nextQuestion}
+                          disabled={currentQuestionIndex === currentStageData.questions.length - 1}
+                        >
+                          <Icon name="ChevronRight" size={16} />
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-6">
-                      {currentStageData.questions.map((question, index) => (
-                        <div key={question.id} className="space-y-3">
-                          <h3 className="font-semibold">{index + 1}. {question.question}</h3>
-                          <div className="space-y-2">
-                            {question.options.map((option, optionIndex) => (
-                              <label key={optionIndex} className="flex items-center space-x-3 cursor-pointer">
+                    {(() => {
+                      const currentQuestion = currentStageData.questions[currentQuestionIndex];
+                      if (!currentQuestion) return null;
+                      
+                      return (
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-semibold">{currentQuestion.question}</h3>
+                          
+                          <div className="space-y-3">
+                            {currentQuestion.options.map((option, optionIndex) => (
+                              <label 
+                                key={optionIndex} 
+                                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                                  optionIndex === currentQuestion.correctAnswer
+                                    ? 'bg-green-50 border-green-300'
+                                    : 'hover:bg-gray-50 border-gray-200'
+                                }`}
+                              >
                                 <input
                                   type="radio"
-                                  name={`question-${question.id}`}
+                                  name={`admin-question-${currentQuestion.id}`}
                                   value={optionIndex}
-                                  checked={testAnswers[question.id] === optionIndex}
-                                  onChange={() => setTestAnswers({ ...testAnswers, [question.id]: optionIndex })}
-                                  className="text-blue-600"
+                                  checked={optionIndex === currentQuestion.correctAnswer}
+                                  readOnly
+                                  className="text-green-600"
                                 />
-                                <span>{option}</span>
+                                <span className="flex-1">{option}</span>
+                                {optionIndex === currentQuestion.correctAnswer && (
+                                  <Icon name="Check" size={16} className="text-green-600" />
+                                )}
                               </label>
                             ))}
                           </div>
                           
                           {/* Show explanation in admin preview if exists */}
-                          {question.explanation && (
-                            <div className="mt-3 p-3 rounded-lg bg-blue-50 border-l-4 border-blue-300">
-                              <div className="flex items-center space-x-2 mb-1">
-                                <Icon name="Info" size={14} className="text-blue-600" />
-                                <span className="text-sm font-medium text-blue-700">Пояснение:</span>
+                          {currentQuestion.explanation && (
+                            <div className="mt-4 p-4 rounded-lg bg-blue-50 border-l-4 border-blue-300">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Icon name="Info" size={16} className="text-blue-600" />
+                                <span className="text-sm font-medium text-blue-700">Объяснение:</span>
                               </div>
-                              <div className="text-sm text-gray-700">{question.explanation}</div>
-                              <div className="text-xs text-gray-500 mt-1">
-                                Правильный ответ: {question.options[question.correctAnswer]}
-                              </div>
+                              <div className="text-sm text-gray-700">{currentQuestion.explanation}</div>
                             </div>
                           )}
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               )}
@@ -1229,36 +1296,132 @@ const MiniCourse = () => {
             ) : (
               <Card>
                 <CardHeader>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Icon name="HelpCircle" size={20} className="text-blue-600" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Icon name="HelpCircle" size={20} className="text-blue-600" />
+                      </div>
+                      <div>
+                        <CardTitle>{currentStageData.title}</CardTitle>
+                        <p className="text-sm text-gray-600">
+                          Вопрос {currentQuestionIndex + 1} из {currentStageData.questions.length}
+                        </p>
+                      </div>
                     </div>
-                    <CardTitle>{currentStageData.title}</CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={prevQuestion}
+                        disabled={currentQuestionIndex === 0}
+                      >
+                        <Icon name="ChevronLeft" size={16} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={nextQuestion}
+                        disabled={currentQuestionIndex === currentStageData.questions.length - 1}
+                      >
+                        <Icon name="ChevronRight" size={16} />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
-                    {currentStageData.questions.map((question, index) => (
-                      <div key={question.id} className="space-y-3">
-                        <h3 className="font-semibold">{index + 1}. {question.question}</h3>
-                        <div className="space-y-2">
-                          {question.options.map((option, optionIndex) => (
-                            <label key={optionIndex} className="flex items-center space-x-3 cursor-pointer">
+                  {(() => {
+                    const currentQuestion = currentStageData.questions[currentQuestionIndex];
+                    if (!currentQuestion) return null;
+                    
+                    return (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">{currentQuestion.question}</h3>
+                        
+                        <div className="space-y-3">
+                          {currentQuestion.options.map((option, optionIndex) => (
+                            <label 
+                              key={optionIndex} 
+                              className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                                testAnswers[currentQuestion.id] === optionIndex 
+                                  ? 'bg-blue-50 border-blue-300' 
+                                  : 'hover:bg-gray-50 border-gray-200'
+                              }`}
+                            >
                               <input
                                 type="radio"
-                                name={`question-${question.id}`}
+                                name={`question-${currentQuestion.id}`}
                                 value={optionIndex}
-                                checked={testAnswers[question.id] === optionIndex}
-                                onChange={() => setTestAnswers({ ...testAnswers, [question.id]: optionIndex })}
+                                checked={testAnswers[currentQuestion.id] === optionIndex}
+                                onChange={() => setTestAnswers({ ...testAnswers, [currentQuestion.id]: optionIndex })}
                                 className="text-blue-600"
+                                disabled={showExplanation}
                               />
-                              <span>{option}</span>
+                              <span className="flex-1">{option}</span>
                             </label>
                           ))}
                         </div>
+                        
+                        {!showExplanation ? (
+                          <Button
+                            onClick={handleAnswerQuestion}
+                            disabled={testAnswers[currentQuestion.id] === undefined}
+                            className="w-full"
+                          >
+                            Ответить
+                          </Button>
+                        ) : (
+                          <div className="space-y-4">
+                            {/* Show result */}
+                            <div className={`p-4 rounded-lg border-l-4 ${
+                              testAnswers[currentQuestion.id] === currentQuestion.correctAnswer
+                                ? 'bg-green-50 border-green-400'
+                                : 'bg-red-50 border-red-400'
+                            }`}>
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Icon 
+                                  name={testAnswers[currentQuestion.id] === currentQuestion.correctAnswer ? "CheckCircle" : "XCircle"} 
+                                  size={16} 
+                                  className={testAnswers[currentQuestion.id] === currentQuestion.correctAnswer ? "text-green-600" : "text-red-600"} 
+                                />
+                                <span className={`font-medium ${
+                                  testAnswers[currentQuestion.id] === currentQuestion.correctAnswer ? "text-green-700" : "text-red-700"
+                                }`}>
+                                  {testAnswers[currentQuestion.id] === currentQuestion.correctAnswer ? "Правильно!" : "Неправильно"}
+                                </span>
+                              </div>
+                              
+                              {testAnswers[currentQuestion.id] !== currentQuestion.correctAnswer && (
+                                <p className="text-sm text-red-700 mb-2">
+                                  Правильный ответ: {currentQuestion.options[currentQuestion.correctAnswer]}
+                                </p>
+                              )}
+                              
+                              {currentQuestion.explanation && (
+                                <div className="text-sm text-gray-700">
+                                  <strong>Объяснение:</strong> {currentQuestion.explanation}
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Navigation buttons */}
+                            <div className="flex space-x-2">
+                              {currentQuestionIndex < currentStageData.questions.length - 1 ? (
+                                <Button onClick={nextQuestion} className="flex-1">
+                                  Следующий вопрос
+                                  <Icon name="ArrowRight" size={16} className="ml-2" />
+                                </Button>
+                              ) : (
+                                <Button onClick={nextStage} disabled={currentStage === courseData.length - 1} className="flex-1">
+                                  Завершить тест
+                                  <Icon name="CheckCircle" size={16} className="ml-2" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             )}
