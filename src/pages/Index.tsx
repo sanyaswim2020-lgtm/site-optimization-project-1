@@ -23,7 +23,8 @@ const Index = () => {
       progress: 65,
       lessons: 24,
       completedLessons: 16,
-      logoUrl: 'https://cdn.poehali.dev/files/24f93e50-2115-481e-939f-89bb8ce5f7b5.png'
+      logoUrl: 'https://cdn.poehali.dev/files/24f93e50-2115-481e-939f-89bb8ce5f7b5.png',
+      teacherPhoto: 'https://cdn.poehali.dev/files/f27ba186-5dbd-49ba-944c-ad2d22efc563.jpg'
     },
     {
       id: 'biology',
@@ -107,7 +108,7 @@ const Index = () => {
   const SubjectsView = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Образовательная платформа</h2>
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">Команда молодых и инициативных</h2>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           Изучайте естественные науки с лучшими преподавателями. 
           Интерактивные уроки, персональный подход и отслеживание прогресса.
@@ -130,7 +131,16 @@ const Index = () => {
                     <Icon name={subject.icon} size={24} />
                   )}
                 </div>
-                <Badge variant="secondary">{subject.teacher}</Badge>
+                <div className="flex items-center space-x-2">
+                  {subject.teacherPhoto && (
+                    <img 
+                      src={subject.teacherPhoto} 
+                      alt={subject.teacher}
+                      className="w-8 h-8 rounded-full object-cover border-2 border-white"
+                    />
+                  )}
+                  <Badge variant="secondary">{subject.teacher}</Badge>
+                </div>
               </div>
               <CardTitle className="text-lg">{subject.title}</CardTitle>
             </CardHeader>
@@ -431,7 +441,7 @@ const Index = () => {
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <Icon name="GraduationCap" size={24} className="text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900">EduPlatform</h1>
+              <h1 className="text-xl font-bold text-gray-900">Команда молодых и инициативных</h1>
             </div>
             
             <div className="flex items-center space-x-4">
