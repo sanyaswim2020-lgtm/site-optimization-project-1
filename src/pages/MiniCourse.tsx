@@ -101,6 +101,7 @@ const MiniCourse = () => {
     questions: [{ question: '', options: ['', '', ''], correctAnswer: 0, explanation: '' }]
   });
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -155,6 +156,22 @@ const MiniCourse = () => {
     if (!courseId) return;
     localStorage.setItem(`minicourse-${courseId}-stage`, currentStage.toString());
   }, [currentStage, courseId]);
+
+  // Force video reload when stage changes
+  useEffect(() => {
+    const currentStageData = courseData[currentStage];
+    if (currentStageData?.type === 'video') {
+      // Small delay to ensure DOM is updated
+      const timer = setTimeout(() => {
+        videoRefs.current.forEach((video) => {
+          if (video) {
+            video.load(); // Force reload of video element
+          }
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStage, courseData]);
 
   // Save test answers to localStorage whenever they change
   useEffect(() => {
@@ -610,9 +627,23 @@ const MiniCourse = () => {
                           <div className="mb-4">
                             {video.url ? (
                               <video
+                                key={video.url}
+                                ref={(el) => {
+                                  if (el) {
+                                    const globalIndex = videoRefs.current.length;
+                                    videoRefs.current[globalIndex] = el;
+                                  }
+                                }}
                                 controls
+                                preload="metadata"
                                 className="w-full rounded-lg"
                                 src={video.url}
+                                onError={(e) => {
+                                  console.error('Video load error:', e);
+                                }}
+                                onLoadStart={() => {
+                                  console.log('Video loading started:', video.url);
+                                }}
                               >
                                 Ваш браузер не поддерживает видео.
                               </video>
@@ -1253,9 +1284,22 @@ const MiniCourse = () => {
                         <div className="mb-4">
                           {video.url ? (
                             <video
+                              key={video.url}
+                              ref={(el) => {
+                                if (el) {
+                                  videoRefs.current[index] = el;
+                                }
+                              }}
                               controls
+                              preload="metadata"
                               className="w-full rounded-lg"
                               src={video.url}
+                              onError={(e) => {
+                                console.error('Video load error:', e);
+                              }}
+                              onLoadStart={() => {
+                                console.log('Video loading started:', video.url);
+                              }}
                             >
                               Ваш браузер не поддерживает видео.
                             </video>
