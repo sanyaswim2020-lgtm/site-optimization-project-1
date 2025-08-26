@@ -163,6 +163,21 @@ const MiniCourse = () => {
     });
   };
 
+  const deleteStage = (stageId: string) => {
+    const stageIndex = courseData.findIndex(stage => stage.id === stageId);
+    if (stageIndex === -1) return;
+    
+    const updatedCourseData = courseData.filter(stage => stage.id !== stageId);
+    setCourseData(updatedCourseData);
+    
+    // Если удаляем текущий этап или этап перед ним, нужно скорректировать текущий индекс
+    if (stageIndex <= currentStage && updatedCourseData.length > 0) {
+      setCurrentStage(Math.max(0, currentStage - 1));
+    } else if (updatedCourseData.length === 0) {
+      setCurrentStage(0);
+    }
+  };
+
   const currentStageData = courseData[currentStage];
   const progress = ((currentStage + 1) / courseData.length) * 100;
 
@@ -550,6 +565,81 @@ const MiniCourse = () => {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Existing Stages Management */}
+                {courseData.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <Icon name="List" size={20} />
+                        <span>Управление этапами курса</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {courseData.map((stage, index) => (
+                          <div key={stage.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+                            <div className="flex items-center space-x-3">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                stage.type === 'video' 
+                                  ? 'bg-red-100 text-red-600' 
+                                  : 'bg-blue-100 text-blue-600'
+                              }`}>
+                                <Icon name={stage.type === 'video' ? 'Play' : 'HelpCircle'} size={16} />
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">
+                                  Этап {index + 1}: {stage.title}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {stage.type === 'video' 
+                                    ? `Видео • ${(stage as VideoStage).duration || 'Длительность не указана'}` 
+                                    : `Тест • ${(stage as TestStage).questions.length} вопросов`
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Badge variant={index === currentStage ? 'default' : 'outline'} className="text-xs">
+                                {index === currentStage ? 'Текущий' : `Этап ${index + 1}`}
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setCurrentStage(index)}
+                                className="text-gray-600 hover:text-blue-600"
+                                title="Перейти к этапу"
+                              >
+                                <Icon name="Eye" size={14} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm(`Вы уверены, что хотите удалить этап "${stage.title}"?`)) {
+                                    deleteStage(stage.id);
+                                  }
+                                }}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                title="Удалить этап"
+                              >
+                                <Icon name="Trash2" size={14} />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {courseData.length === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          <Icon name="BookOpen" size={32} className="mx-auto mb-2 opacity-50" />
+                          <p>В курсе пока нет этапов</p>
+                          <p className="text-sm">Создайте первый этап с видео или тестом</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </TabsContent>
           </Tabs>
