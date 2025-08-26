@@ -296,6 +296,29 @@ const MiniCourse = () => {
     });
   };
 
+  const addOptionToQuestion = (questionIndex: number) => {
+    const updatedQuestions = [...newTest.questions];
+    updatedQuestions[questionIndex].options.push('');
+    setNewTest({ ...newTest, questions: updatedQuestions });
+  };
+
+  const removeOptionFromQuestion = (questionIndex: number, optionIndex: number) => {
+    const updatedQuestions = [...newTest.questions];
+    if (updatedQuestions[questionIndex].options.length > 2) { // Минимум 2 варианта
+      updatedQuestions[questionIndex].options.splice(optionIndex, 1);
+      // Если удаляем правильный ответ или он стал недоступным, сбрасываем на первый
+      if (updatedQuestions[questionIndex].correctAnswer >= updatedQuestions[questionIndex].options.length) {
+        updatedQuestions[questionIndex].correctAnswer = 0;
+      }
+      setNewTest({ ...newTest, questions: updatedQuestions });
+    }
+  };
+
+  const removeQuestion = (questionIndex: number) => {
+    const updatedQuestions = newTest.questions.filter((_, index) => index !== questionIndex);
+    setNewTest({ ...newTest, questions: updatedQuestions });
+  };
+
   if (!currentStageData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -514,7 +537,7 @@ const MiniCourse = () => {
                         <div key={video.id} className="border rounded-lg p-4 space-y-3">
                           <div>
                             <Label>Название видео {index + 1}</Label>
-                            <Input
+                            <textarea
                               value={video.title}
                               onChange={(e) => {
                                 const updatedVideos = [...newVideo.videos];
@@ -522,6 +545,8 @@ const MiniCourse = () => {
                                 setNewVideo({ ...newVideo, videos: updatedVideos });
                               }}
                               placeholder="Название видео"
+                              className="w-full min-h-[60px] p-3 border border-gray-300 rounded-md resize-y focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              rows={2}
                             />
                           </div>
                           
@@ -598,11 +623,13 @@ const MiniCourse = () => {
                   <CardContent className="space-y-4">
                     <div>
                       <Label htmlFor="test-title">Название теста</Label>
-                      <Input
+                      <textarea
                         id="test-title"
                         value={newTest.title}
                         onChange={(e) => setNewTest({ ...newTest, title: e.target.value })}
                         placeholder="Введите название теста"
+                        className="w-full min-h-[60px] p-3 border border-gray-300 rounded-md resize-y focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        rows={2}
                       />
                     </div>
                     
@@ -610,7 +637,7 @@ const MiniCourse = () => {
                       <div key={questionIndex} className="border rounded-lg p-4 space-y-3">
                         <div>
                           <Label>Вопрос {questionIndex + 1}</Label>
-                          <Input
+                          <textarea
                             value={question.question}
                             onChange={(e) => {
                               const updatedQuestions = [...newTest.questions];
@@ -618,33 +645,77 @@ const MiniCourse = () => {
                               setNewTest({ ...newTest, questions: updatedQuestions });
                             }}
                             placeholder="Введите вопрос"
+                            className="w-full min-h-[80px] p-3 border border-gray-300 rounded-md resize-y focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            rows={3}
                           />
                         </div>
                         
-                        {question.options.map((option, optionIndex) => (
-                          <div key={optionIndex} className="flex items-center space-x-2">
-                            <input
-                              type="radio"
-                              name={`correct-${questionIndex}`}
-                              checked={question.correctAnswer === optionIndex}
-                              onChange={() => {
-                                const updatedQuestions = [...newTest.questions];
-                                updatedQuestions[questionIndex].correctAnswer = optionIndex;
-                                setNewTest({ ...newTest, questions: updatedQuestions });
-                              }}
-                            />
-                            <Input
-                              value={option}
-                              onChange={(e) => {
-                                const updatedQuestions = [...newTest.questions];
-                                updatedQuestions[questionIndex].options[optionIndex] = e.target.value;
-                                setNewTest({ ...newTest, questions: updatedQuestions });
-                              }}
-                              placeholder={`Вариант ${optionIndex + 1}`}
-                              className="flex-1"
-                            />
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm font-medium">Варианты ответов</Label>
+                            <div className="flex space-x-2">
+                              <Button
+                                onClick={() => addOptionToQuestion(questionIndex)}
+                                variant="outline"
+                                size="sm"
+                                className="text-xs"
+                              >
+                                <Icon name="Plus" size={12} className="mr-1" />
+                                Добавить вариант
+                              </Button>
+                              <Button
+                                onClick={() => removeQuestion(questionIndex)}
+                                variant="destructive"
+                                size="sm"
+                                className="text-xs"
+                              >
+                                <Icon name="Trash2" size={12} className="mr-1" />
+                                Удалить вопрос
+                              </Button>
+                            </div>
                           </div>
-                        ))}
+                          
+                          {question.options.map((option, optionIndex) => (
+                            <div key={optionIndex} className="flex items-center space-x-2 p-2 border rounded-md bg-gray-50">
+                              <input
+                                type="radio"
+                                name={`correct-${questionIndex}`}
+                                checked={question.correctAnswer === optionIndex}
+                                onChange={() => {
+                                  const updatedQuestions = [...newTest.questions];
+                                  updatedQuestions[questionIndex].correctAnswer = optionIndex;
+                                  setNewTest({ ...newTest, questions: updatedQuestions });
+                                }}
+                                className="w-4 h-4 text-blue-600"
+                              />
+                              <Input
+                                value={option}
+                                onChange={(e) => {
+                                  const updatedQuestions = [...newTest.questions];
+                                  updatedQuestions[questionIndex].options[optionIndex] = e.target.value;
+                                  setNewTest({ ...newTest, questions: updatedQuestions });
+                                }}
+                                placeholder={`Вариант ${optionIndex + 1}`}
+                                className="flex-1"
+                              />
+                              {question.options.length > 2 && (
+                                <Button
+                                  onClick={() => removeOptionFromQuestion(questionIndex, optionIndex)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Icon name="X" size={16} />
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                          
+                          <div className="text-xs text-gray-500 mt-2">
+                            <Icon name="Info" size={12} className="inline mr-1" />
+                            Выберите правильный ответ, отметив соответствующую радио-кнопку
+                          </div>
+                        </div>
                       </div>
                     ))}
                     

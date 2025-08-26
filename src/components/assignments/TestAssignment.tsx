@@ -92,6 +92,29 @@ export const TestAssignmentCreator = ({ onSave, onCancel }: TestAssignmentCreato
     }));
   };
 
+  const addOption = () => {
+    setCurrentQuestion(prev => ({
+      ...prev,
+      options: [...(prev.options || []), '']
+    }));
+  };
+
+  const removeOption = (index: number) => {
+    if ((currentQuestion.options?.length || 0) <= 2) return; // Минимум 2 варианта
+    
+    const newOptions = currentQuestion.options?.filter((_, i) => i !== index) || [];
+    setCurrentQuestion(prev => ({
+      ...prev,
+      options: newOptions,
+      // Сброс правильного ответа если он стал недоступен
+      correctAnswer: prev.type === 'single' && prev.correctAnswer === currentQuestion.options?.[index] 
+        ? newOptions[0] || '' 
+        : prev.type === 'multiple' && Array.isArray(prev.correctAnswer)
+        ? prev.correctAnswer.filter(ans => ans !== currentQuestion.options?.[index])
+        : prev.correctAnswer
+    }));
+  };
+
   const handleSave = () => {
     if (!assignment.title || !assignment.questions?.length) return;
 
@@ -125,10 +148,12 @@ export const TestAssignmentCreator = ({ onSave, onCancel }: TestAssignmentCreato
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">Название теста</label>
-              <Input
+              <Textarea
                 value={assignment.title}
                 onChange={(e) => setAssignment(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="Введите название теста"
+                rows={2}
+                className="min-h-[60px] resize-y"
               />
             </div>
             <div>
@@ -229,45 +254,80 @@ export const TestAssignmentCreator = ({ onSave, onCancel }: TestAssignmentCreato
           </div>
 
           {currentQuestion.type !== 'text' && (
-            <div className="space-y-3">
-              <label className="block text-sm font-medium">Варианты ответов</label>
-              {currentQuestion.options?.map((option, index) => (
-                <div key={index} className="flex items-center space-x-3">
-                  {currentQuestion.type === 'single' ? (
-                    <input
-                      type="radio"
-                      name="correct-answer"
-                      checked={currentQuestion.correctAnswer === option}
-                      onChange={() => setCurrentQuestion(prev => ({ ...prev, correctAnswer: option }))}
-                      className="w-4 h-4"
-                    />
-                  ) : (
-                    <Checkbox
-                      checked={Array.isArray(currentQuestion.correctAnswer) && currentQuestion.correctAnswer.includes(option)}
-                      onCheckedChange={(checked) => {
-                        const current = Array.isArray(currentQuestion.correctAnswer) ? currentQuestion.correctAnswer : [];
-                        const updated = checked 
-                          ? [...current, option]
-                          : current.filter(ans => ans !== option);
-                        setCurrentQuestion(prev => ({ ...prev, correctAnswer: updated }));
-                      }}
-                    />
-                  )}
-                  <Input
-                    value={option}
-                    onChange={(e) => {
-                      const newOptions = [...(currentQuestion.options || [])];
-                      newOptions[index] = e.target.value;
-                      setCurrentQuestion(prev => ({ ...prev, options: newOptions }));
-                    }}
-                    placeholder={`Вариант ${index + 1}`}
-                    className="flex-1"
-                  />
-                  <span className="text-xs text-gray-500">
-                    {currentQuestion.type === 'single' ? 'правильный' : 'отметьте если правильный'}
-                  </span>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium">Варианты ответов</label>
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={addOption}
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                  >
+                    <Icon name="Plus" size={12} className="mr-1" />
+                    Добавить вариант
+                  </Button>
                 </div>
-              ))}
+              </div>
+              
+              <div className="space-y-3">
+                {currentQuestion.options?.map((option, index) => (
+                  <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg bg-gray-50">
+                    {currentQuestion.type === 'single' ? (
+                      <input
+                        type="radio"
+                        name="correct-answer"
+                        checked={currentQuestion.correctAnswer === option}
+                        onChange={() => setCurrentQuestion(prev => ({ ...prev, correctAnswer: option }))}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                    ) : (
+                      <Checkbox
+                        checked={Array.isArray(currentQuestion.correctAnswer) && currentQuestion.correctAnswer.includes(option)}
+                        onCheckedChange={(checked) => {
+                          const current = Array.isArray(currentQuestion.correctAnswer) ? currentQuestion.correctAnswer : [];
+                          const updated = checked 
+                            ? [...current, option]
+                            : current.filter(ans => ans !== option);
+                          setCurrentQuestion(prev => ({ ...prev, correctAnswer: updated }));
+                        }}
+                      />
+                    )}
+                    <Input
+                      value={option}
+                      onChange={(e) => {
+                        const newOptions = [...(currentQuestion.options || [])];
+                        newOptions[index] = e.target.value;
+                        setCurrentQuestion(prev => ({ ...prev, options: newOptions }));
+                      }}
+                      placeholder={`Вариант ${index + 1}`}
+                      className="flex-1"
+                    />
+                    {(currentQuestion.options?.length || 0) > 2 && (
+                      <Button
+                        onClick={() => removeOption(index)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        type="button"
+                      >
+                        <Icon name="X" size={16} />
+                      </Button>
+                    )}
+                    <span className="text-xs text-gray-500 min-w-fit">
+                      {currentQuestion.type === 'single' ? 'правильный' : 'отметьте если правильный'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="text-xs text-gray-500 flex items-center">
+                <Icon name="Info" size={12} className="mr-1" />
+                {currentQuestion.type === 'single' 
+                  ? 'Выберите один правильный ответ' 
+                  : 'Отметьте все правильные варианты'
+                }
+              </div>
             </div>
           )}
 
