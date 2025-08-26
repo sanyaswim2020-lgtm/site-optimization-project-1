@@ -85,7 +85,8 @@ const Index = () => {
       grade: '11 класс',
       text: 'Химия с Саньком помогла мне разобраться в сложных темах. Теперь химия - мой любимый предмет!',
       rating: 5,
-      subject: 'Химия с Саньком'
+      subject: 'Химия с Саньком',
+      photo: '/img/066a34d1-1476-4b66-97df-463a08a30fbc.jpg'
     },
     {
       id: 2,
@@ -93,7 +94,8 @@ const Index = () => {
       grade: '9 класс',
       text: 'Отличная подготовка к ОГЭ по химии. Результат превзошел ожидания!',
       rating: 5,
-      subject: 'Химия ОГЭ'
+      subject: 'Химия ОГЭ',
+      photo: '/img/2f63d23a-41a9-4feb-a819-993cb7447a2b.jpg'
     },
     {
       id: 3,
@@ -101,15 +103,16 @@ const Index = () => {
       grade: '10 класс',
       text: 'Биология стала понятнее благодаря интерактивным урокам и отличным объяснениям.',
       rating: 4,
-      subject: 'Биология'
+      subject: 'Биология',
+      photo: '/img/cfac57b8-3822-429e-8c36-841f765ca4c4.jpg'
     }
   ];
 
   const SubjectsView = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Команда молодых и инициативных</h2>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+        <h2 className="text-3xl font-bold text-white mb-4">Команда молодых и инициативных</h2>
+        <p className="text-lg text-gray-200 max-w-2xl mx-auto">
           Изучайте естественные науки с лучшими преподавателями. 
           Интерактивные уроки, персональный подход и отслеживание прогресса.
         </p>
@@ -117,7 +120,7 @@ const Index = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {subjects.map((subject) => (
-          <Card key={subject.id} className={`${subject.borderColor} border-2 hover:shadow-lg transition-shadow cursor-pointer`}>
+          <Card key={subject.id} className={`${subject.borderColor} border-2 hover:shadow-lg transition-shadow cursor-pointer bg-white/90 backdrop-blur-sm`}>
             <CardHeader className={`${subject.bgColor} rounded-t-lg`}>
               <div className="flex items-center justify-between">
                 <div className={`p-2 rounded-lg bg-gradient-to-r ${subject.color} text-white`}>
@@ -172,15 +175,67 @@ const Index = () => {
           </Card>
         ))}
       </div>
+
+      {/* Секция отзывов */}
+      <div className="mt-16">
+        <div className="text-center mb-12">
+          <h3 className="text-3xl font-bold text-white mb-4">Отзывы наших учеников</h3>
+          <p className="text-lg text-gray-200 max-w-2xl mx-auto">
+            Узнайте, что говорят наши студенты о своем опыте обучения
+          </p>
+        </div>
+
+        <div className="space-y-8">
+          {reviews.map((review, index) => (
+            <div key={review.id} className={`flex items-center gap-8 ${
+              index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'
+            }`}>
+              {/* Фото */}
+              <div className="flex-shrink-0">
+                <img
+                  src={review.photo}
+                  alt={review.name}
+                  className="w-24 h-24 rounded-lg object-cover border-4 border-white/20"
+                />
+              </div>
+
+              {/* Карточка с отзывом */}
+              <Card className="flex-1 bg-white/90 backdrop-blur-sm max-w-md">
+                <CardContent className="p-6">
+                  <div className="mb-4">
+                    <h4 className="font-semibold text-lg">{review.name}</h4>
+                    <p className="text-sm text-gray-600">{review.grade}</p>
+                  </div>
+                  
+                  <div className="flex mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Icon 
+                        key={i}
+                        name="Star" 
+                        size={16} 
+                        className={i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'} 
+                      />
+                    ))}
+                  </div>
+                  
+                  <p className="text-gray-700 mb-3">{review.text}</p>
+                  
+                  <Badge variant="outline">{review.subject}</Badge>
+                </CardContent>
+              </Card>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 
   const ContactsView = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Контакты</h2>
+      <h2 className="text-2xl font-bold text-white">Контакты</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Card>
+        <Card className="bg-white/90 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>Свяжитесь с нами</CardTitle>
           </CardHeader>
@@ -204,7 +259,7 @@ const Index = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-white/90 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>Напишите нам</CardTitle>
           </CardHeader>
@@ -244,10 +299,10 @@ const Index = () => {
 
   const AboutView = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">О нас</h2>
+      <h2 className="text-2xl font-bold text-white">О нас</h2>
       
       <div className="space-y-8">
-        <Card>
+        <Card className="bg-white/90 backdrop-blur-sm">
           <CardContent className="p-8">
             <div className="text-center mb-8">
               <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -305,7 +360,7 @@ const Index = () => {
 
   const ReviewsView = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Отзывы учеников</h2>
+      <h2 className="text-2xl font-bold text-white">Отзывы учеников</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {reviews.map((review) => (
@@ -355,8 +410,8 @@ const Index = () => {
   const MiniCoursesView = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Мини-курсы</h2>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+        <h2 className="text-3xl font-bold text-white mb-4">Мини-курсы</h2>
+        <p className="text-lg text-gray-200 max-w-2xl mx-auto">
           Интенсивные курсы для углубленного изучения сложных тем. 
           Быстрый путь к экспертизе в выбранной области.
         </p>
@@ -364,7 +419,7 @@ const Index = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {miniCourses.map((course) => (
-          <Card key={course.id} className={`${course.bgColor} ${course.borderColor} border-2 hover:shadow-lg transition-all duration-300 cursor-pointer`}
+          <Card key={course.id} className={`${course.bgColor} ${course.borderColor} border-2 hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/90 backdrop-blur-sm`}
                 onClick={() => navigate(`/minicourse/${course.id}`)}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -432,9 +487,19 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative overflow-hidden">
+      {/* Космический фон */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat z-0"
+        style={{
+          backgroundImage: 'url(https://cdn.poehali.dev/files/f5b0ceb5-7132-42cd-a8d6-841d27ed2207.jpeg)'
+        }}
+      />
+      {/* Тёмный оверлей для лучшей читаемости */}
+      <div className="fixed inset-0 bg-black/40 z-0" />
+      
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white/90 backdrop-blur-sm border-b border-gray-200 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
@@ -456,7 +521,7 @@ const Index = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <div className="flex gap-8">
           {/* Sidebar */}
           <aside className="w-64 space-y-2">
@@ -467,8 +532,8 @@ const Index = () => {
                   onClick={() => setActiveSection(item.id)}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
                     activeSection === item.id
-                      ? 'bg-blue-100 text-blue-700 font-medium'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-blue-100/90 text-blue-700 font-medium backdrop-blur-sm'
+                      : 'text-white hover:bg-white/20 backdrop-blur-sm'
                   }`}
                 >
                   <Icon name={item.icon} size={20} />
