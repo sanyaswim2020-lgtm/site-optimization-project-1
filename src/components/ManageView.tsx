@@ -93,6 +93,28 @@ const ManageView = () => {
     }
   };
 
+  const moveLessonUp = (lessonId: string) => {
+    const currentIndex = lessons.findIndex(lesson => lesson.id === lessonId);
+    if (currentIndex <= 0) return;
+
+    const newLessons = [...lessons];
+    [newLessons[currentIndex], newLessons[currentIndex - 1]] = 
+    [newLessons[currentIndex - 1], newLessons[currentIndex]];
+    
+    setLessons(newLessons);
+  };
+
+  const moveLessonDown = (lessonId: string) => {
+    const currentIndex = lessons.findIndex(lesson => lesson.id === lessonId);
+    if (currentIndex === -1 || currentIndex >= lessons.length - 1) return;
+
+    const newLessons = [...lessons];
+    [newLessons[currentIndex], newLessons[currentIndex + 1]] = 
+    [newLessons[currentIndex + 1], newLessons[currentIndex]];
+    
+    setLessons(newLessons);
+  };
+
   const renderLessonsList = () => (
     <div className="space-y-4">
       {/* Заголовок и кнопка создания */}
@@ -187,7 +209,37 @@ const ManageView = () => {
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1">
+                  {/* Move Up/Down */}
+                  <div className="flex flex-col">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        moveLessonUp(lesson.id);
+                      }}
+                      disabled={lessons.findIndex(l => l.id === lesson.id) === 0}
+                      className="h-5 w-6 p-0 text-gray-400 hover:text-blue-600"
+                      title="Переместить вверх"
+                    >
+                      <Icon name="ChevronUp" size={12} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        moveLessonDown(lesson.id);
+                      }}
+                      disabled={lessons.findIndex(l => l.id === lesson.id) === lessons.length - 1}
+                      className="h-5 w-6 p-0 text-gray-400 hover:text-blue-600"
+                      title="Переместить вниз"
+                    >
+                      <Icon name="ChevronDown" size={12} />
+                    </Button>
+                  </div>
+                  
                   <Button
                     variant="ghost"
                     size="sm"

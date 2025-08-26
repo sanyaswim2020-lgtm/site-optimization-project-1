@@ -96,6 +96,7 @@ const MiniCourse = () => {
     title: '',
     questions: [{ question: '', options: ['', '', ''], correctAnswer: 0 }]
   });
+  const [editingStageId, setEditingStageId] = useState<string | null>(null);
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -179,35 +180,43 @@ const MiniCourse = () => {
   };
 
   const createVideoStage = () => {
-    const newStage: VideoStage = {
-      id: `video-${Date.now()}`,
-      type: 'video',
-      title: newVideo.title || 'Новый этап',
-      description: newVideo.description || 'Описание этапа',
-      duration: newVideo.duration || '15 мин',
-      videos: newVideo.videos.filter(v => v.title.trim() !== '')
-    };
-    setCourseData([...courseData, newStage]);
-    setNewVideo({ 
-      title: '', 
-      description: '', 
-      duration: '',
-      videos: [{ id: '1', title: 'Видео 1', url: '', files: [] }]
-    });
+    if (editingStageId) {
+      saveEditedStage();
+    } else {
+      const newStage: VideoStage = {
+        id: `video-${Date.now()}`,
+        type: 'video',
+        title: newVideo.title || 'Новый этап',
+        description: newVideo.description || 'Описание этапа',
+        duration: newVideo.duration || '15 мин',
+        videos: newVideo.videos.filter(v => v.title.trim() !== '')
+      };
+      setCourseData([...courseData, newStage]);
+      setNewVideo({ 
+        title: '', 
+        description: '', 
+        duration: '',
+        videos: [{ id: '1', title: 'Видео 1', url: '', files: [] }]
+      });
+    }
   };
 
   const addTestStage = () => {
-    const newStage: TestStage = {
-      id: `test-${Date.now()}`,
-      type: 'test',
-      title: newTest.title || 'Новый тест',
-      questions: newTest.questions.filter(q => q.question.trim() !== '')
-    };
-    setCourseData([...courseData, newStage]);
-    setNewTest({
-      title: '',
-      questions: [{ question: '', options: ['', '', ''], correctAnswer: 0 }]
-    });
+    if (editingStageId) {
+      saveEditedStage();
+    } else {
+      const newStage: TestStage = {
+        id: `test-${Date.now()}`,
+        type: 'test',
+        title: newTest.title || 'Новый тест',
+        questions: newTest.questions.filter(q => q.question.trim() !== '')
+      };
+      setCourseData([...courseData, newStage]);
+      setNewTest({
+        title: '',
+        questions: [{ question: '', options: ['', '', ''], correctAnswer: 0 }]
+      });
+    }
   };
 
   const deleteStage = (stageId: string) => {
@@ -317,6 +326,97 @@ const MiniCourse = () => {
   const removeQuestion = (questionIndex: number) => {
     const updatedQuestions = newTest.questions.filter((_, index) => index !== questionIndex);
     setNewTest({ ...newTest, questions: updatedQuestions });
+  };
+
+  const moveStage = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= courseData.length) return;
+    
+    const updatedCourseData = [...courseData];
+    const [movedStage] = updatedCourseData.splice(fromIndex, 1);
+    updatedCourseData.splice(toIndex, 0, movedStage);
+    setCourseData(updatedCourseData);
+    
+    // Обновляем текущий индекс, если нужно
+    if (currentStage === fromIndex) {
+      setCurrentStage(toIndex);
+    } else if (currentStage === toIndex) {
+      setCurrentStage(fromIndex);
+    } else if (fromIndex < currentStage && toIndex >= currentStage) {
+      setCurrentStage(currentStage - 1);
+    } else if (fromIndex > currentStage && toIndex <= currentStage) {
+      setCurrentStage(currentStage + 1);
+    }
+  };
+
+  const editStage = (stage: VideoStage | TestStage) => {
+    if (stage.type === 'video') {
+      setNewVideo({
+        title: stage.title,
+        description: stage.description,
+        duration: stage.duration,
+        videos: stage.videos
+      });
+      setEditingStageId(stage.id);
+    } else {
+      setNewTest({
+        title: stage.title,
+        questions: stage.questions
+      });
+      setEditingStageId(stage.id);
+    }
+  };
+
+  const saveEditedStage = () => {
+    if (!editingStageId) return;
+    
+    const stageIndex = courseData.findIndex(stage => stage.id === editingStageId);
+    if (stageIndex === -1) return;
+    
+    const updatedCourseData = [...courseData];
+    const existingStage = updatedCourseData[stageIndex];
+    
+    if (existingStage.type === 'video') {
+      updatedCourseData[stageIndex] = {
+        ...existingStage,
+        title: newVideo.title || existingStage.title,
+        description: newVideo.description || existingStage.description,
+        duration: newVideo.duration || existingStage.duration,
+        videos: newVideo.videos.filter(v => v.title.trim() !== '')
+      };
+      setNewVideo({ 
+        title: '', 
+        description: '', 
+        duration: '',
+        videos: [{ id: '1', title: 'Видео 1', url: '', files: [] }]
+      });
+    } else {
+      updatedCourseData[stageIndex] = {
+        ...existingStage,
+        title: newTest.title || existingStage.title,
+        questions: newTest.questions.filter(q => q.question.trim() !== '')
+      };
+      setNewTest({
+        title: '',
+        questions: [{ question: '', options: ['', '', ''], correctAnswer: 0 }]
+      });
+    }
+    
+    setCourseData(updatedCourseData);
+    setEditingStageId(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingStageId(null);
+    setNewVideo({ 
+      title: '', 
+      description: '', 
+      duration: '',
+      videos: [{ id: '1', title: 'Видео 1', url: '', files: [] }]
+    });
+    setNewTest({
+      title: '',
+      questions: [{ question: '', options: ['', '', ''], correctAnswer: 0 }]
+    });
   };
 
   if (!currentStageData) {
@@ -490,9 +590,17 @@ const MiniCourse = () => {
                 {/* Add Video Stage */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Icon name="Video" size={20} />
-                      <span>Добавить этап с видео</span>
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Icon name="Video" size={20} />
+                        <span>{editingStageId ? 'Редактировать этап с видео' : 'Добавить этап с видео'}</span>
+                      </div>
+                      {editingStageId && (
+                        <Button onClick={cancelEdit} variant="outline" size="sm">
+                          <Icon name="X" size={14} className="mr-1" />
+                          Отмена
+                        </Button>
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -607,7 +715,7 @@ const MiniCourse = () => {
 
                     <Button onClick={createVideoStage} className="w-full">
                       <Icon name="Save" size={16} className="mr-2" />
-                      Создать этап
+                      {editingStageId ? 'Сохранить изменения' : 'Создать этап'}
                     </Button>
                   </CardContent>
                 </Card>
@@ -615,9 +723,17 @@ const MiniCourse = () => {
                 {/* Add Test */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Icon name="HelpCircle" size={20} />
-                      <span>Добавить тест</span>
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Icon name="HelpCircle" size={20} />
+                        <span>{editingStageId ? 'Редактировать тест' : 'Добавить тест'}</span>
+                      </div>
+                      {editingStageId && (
+                        <Button onClick={cancelEdit} variant="outline" size="sm">
+                          <Icon name="X" size={14} className="mr-1" />
+                          Отмена
+                        </Button>
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -725,7 +841,7 @@ const MiniCourse = () => {
                         Добавить вопрос
                       </Button>
                       <Button onClick={addTestStage} className="flex-1">
-                        Сохранить тест
+                        {editingStageId ? 'Сохранить изменения' : 'Сохранить тест'}
                       </Button>
                     </div>
                   </CardContent>
@@ -764,10 +880,47 @@ const MiniCourse = () => {
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-1">
                               <Badge variant={index === currentStage ? 'default' : 'outline'} className="text-xs">
                                 {index === currentStage ? 'Текущий' : `Этап ${index + 1}`}
                               </Badge>
+                              
+                              {/* Move Up/Down */}
+                              <div className="flex flex-col">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => moveStage(index, index - 1)}
+                                  disabled={index === 0}
+                                  className="h-5 w-6 p-0 text-gray-400 hover:text-blue-600"
+                                  title="Переместить вверх"
+                                >
+                                  <Icon name="ChevronUp" size={12} />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => moveStage(index, index + 1)}
+                                  disabled={index === courseData.length - 1}
+                                  className="h-5 w-6 p-0 text-gray-400 hover:text-blue-600"
+                                  title="Переместить вниз"
+                                >
+                                  <Icon name="ChevronDown" size={12} />
+                                </Button>
+                              </div>
+
+                              {/* Edit Button */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => editStage(stage)}
+                                className="text-gray-600 hover:text-green-600"
+                                title="Редактировать этап"
+                              >
+                                <Icon name="Edit" size={14} />
+                              </Button>
+                              
+                              {/* View Button */}
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -777,6 +930,8 @@ const MiniCourse = () => {
                               >
                                 <Icon name="Eye" size={14} />
                               </Button>
+                              
+                              {/* Delete Button */}
                               <Button
                                 variant="ghost"
                                 size="sm"
