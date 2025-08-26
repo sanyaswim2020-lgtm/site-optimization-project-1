@@ -131,9 +131,22 @@ const MiniCourse = () => {
 
   // Save course data to localStorage whenever it changes
   useEffect(() => {
-    if (!courseId || courseData.length === 0) return;
+    if (!courseId) return;
     localStorage.setItem(`minicourse-${courseId}-data`, JSON.stringify(courseData));
-  }, [courseData, courseId]);
+    console.log('Course data saved:', courseData.length, 'stages');
+    
+    // Create backup every time data changes
+    if (courseData.length > 0) {
+      const backupData = {
+        courseData,
+        currentStage,
+        testAnswers,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(`minicourse-${courseId}-backup`, JSON.stringify(backupData));
+      console.log('Backup created:', backupData);
+    }
+  }, [courseData, courseId, currentStage, testAnswers]);
 
   // Save current stage to localStorage whenever it changes
   useEffect(() => {
@@ -146,6 +159,48 @@ const MiniCourse = () => {
     if (!courseId || Object.keys(testAnswers).length === 0) return;
     localStorage.setItem(`minicourse-${courseId}-answers`, JSON.stringify(testAnswers));
   }, [testAnswers, courseId]);
+
+  // Backup and restore functions
+  const createBackup = () => {
+    if (!courseId) return;
+    const backupData = {
+      courseData,
+      currentStage,
+      testAnswers,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(`minicourse-${courseId}-backup`, JSON.stringify(backupData));
+    console.log('Backup created:', backupData);
+  };
+
+  const restoreFromBackup = () => {
+    if (!courseId) return;
+    const backupData = localStorage.getItem(`minicourse-${courseId}-backup`);
+    if (backupData) {
+      try {
+        const backup = JSON.parse(backupData);
+        setCourseData(backup.courseData || []);
+        setCurrentStage(backup.currentStage || 0);
+        setTestAnswers(backup.testAnswers || {});
+        console.log('Restored from backup:', backup);
+        return true;
+      } catch (e) {
+        console.error('Error restoring backup:', e);
+      }
+    }
+    return false;
+  };
+
+  const exportCourseData = () => {
+    const dataStr = JSON.stringify(courseData, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const exportFileDefaultName = `minicourse-${courseId}-export.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
 
   const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>, videoIndex: number) => {
     const file = event.target.files?.[0];
@@ -1011,6 +1066,62 @@ const MiniCourse = () => {
                             <p className="font-medium mb-1">Автоматическое сохранение</p>
                             <p>Все изменения в курсе автоматически сохраняются в браузере. Данные восстанавливаются при обновлении страницы.</p>
                           </div>
+                        </div>
+                      </div>
+                      
+                      {/* Backup and Restore Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-4 border border-blue-200 rounded-lg bg-blue-50">
+                          <div>
+                            <h4 className="font-medium text-blue-800">Резервное копирование</h4>
+                            <p className="text-sm text-blue-600 mt-1">
+                              Создать резервную копию или восстановить данные курса
+                            </p>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button
+                              onClick={createBackup}
+                              variant="outline"
+                              size="sm"
+                              className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                            >
+                              <Icon name="Save" size={16} className="mr-2" />
+                              Создать копию
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                if (restoreFromBackup()) {
+                                  alert('Данные успешно восстановлены из резервной копии!');
+                                } else {
+                                  alert('Резервная копия не найдена');
+                                }
+                              }}
+                              variant="outline" 
+                              size="sm"
+                              className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                            >
+                              <Icon name="RotateCcw" size={16} className="mr-2" />
+                              Восстановить
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-4 border border-green-200 rounded-lg bg-green-50">
+                          <div>
+                            <h4 className="font-medium text-green-800">Экспорт данных</h4>
+                            <p className="text-sm text-green-600 mt-1">
+                              Скачать данные курса в файл JSON
+                            </p>
+                          </div>
+                          <Button
+                            onClick={exportCourseData}
+                            variant="outline"
+                            size="sm"
+                            className="border-green-300 text-green-700 hover:bg-green-100"
+                          >
+                            <Icon name="Download" size={16} className="mr-2" />
+                            Экспорт
+                          </Button>
                         </div>
                       </div>
                       
