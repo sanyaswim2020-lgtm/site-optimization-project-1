@@ -38,6 +38,7 @@ interface TestStage {
     question: string;
     options: string[];
     correctAnswer: number;
+    explanation?: string;
   }[];
 }
 
@@ -79,7 +80,8 @@ const MiniCourse = () => {
             'Характеристика энергетического состояния электрона',
             'Скорость движения электрона'
           ],
-          correctAnswer: 1
+          correctAnswer: 1,
+          explanation: 'Квантовые числа — это параметры, которые описывают энергетическое состояние электрона в атоме. Они определяют орбиталь, на которой находится электрон, и его энергию.'
         }
       ]
     }
@@ -94,7 +96,7 @@ const MiniCourse = () => {
   });
   const [newTest, setNewTest] = useState({
     title: '',
-    questions: [{ question: '', options: ['', '', ''], correctAnswer: 0 }]
+    questions: [{ question: '', options: ['', '', ''], correctAnswer: 0, explanation: '' }]
   });
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
 
@@ -271,7 +273,8 @@ const MiniCourse = () => {
                 'Характеристика энергетического состояния электрона',
                 'Скорость движения электрона'
               ],
-              correctAnswer: 1
+              correctAnswer: 1,
+              explanation: 'Квантовые числа — это параметры, которые описывают энергетическое состояние электрона в атоме. Они определяют орбиталь, на которой находится электрон, и его энергию.'
             }
           ]
         }
@@ -301,7 +304,7 @@ const MiniCourse = () => {
   const addQuestionToTest = () => {
     setNewTest({
       ...newTest,
-      questions: [...newTest.questions, { question: '', options: ['', '', ''], correctAnswer: 0 }]
+      questions: [...newTest.questions, { question: '', options: ['', '', ''], correctAnswer: 0, explanation: '' }]
     });
   };
 
@@ -577,6 +580,20 @@ const MiniCourse = () => {
                               </label>
                             ))}
                           </div>
+                          
+                          {/* Show explanation in admin preview if exists */}
+                          {question.explanation && (
+                            <div className="mt-3 p-3 rounded-lg bg-blue-50 border-l-4 border-blue-300">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <Icon name="Info" size={14} className="text-blue-600" />
+                                <span className="text-sm font-medium text-blue-700">Пояснение:</span>
+                              </div>
+                              <div className="text-sm text-gray-700">{question.explanation}</div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                Правильный ответ: {question.options[question.correctAnswer]}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -832,6 +849,23 @@ const MiniCourse = () => {
                             Выберите правильный ответ, отметив соответствующую радио-кнопку
                           </div>
                         </div>
+                        
+                        {/* Explanation field */}
+                        <div>
+                          <Label className="text-sm font-medium">Объяснение ответа (необязательно)</Label>
+                          <Textarea
+                            value={question.explanation || ''}
+                            onChange={(e) => {
+                              const updatedQuestions = [...newTest.questions];
+                              updatedQuestions[questionIndex].explanation = e.target.value;
+                              setNewTest({ ...newTest, questions: updatedQuestions });
+                            }}
+                            placeholder="Введите объяснение правильного ответа"
+                            className="min-h-[60px] resize-y"
+                            rows={2}
+                          />
+                        </div>
+                      </div>
                       </div>
                     ))}
                     
