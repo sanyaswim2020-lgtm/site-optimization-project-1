@@ -493,7 +493,21 @@ const MiniCourse = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div 
+      className="min-h-screen bg-gray-50 relative"
+      style={{
+        backgroundImage: 'url(https://cdn.poehali.dev/files/9fe0ef78-b574-42b7-8ed4-2e886b56d5d8.jpeg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* Background overlay */}
+      <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm"></div>
+      
+      {/* Content wrapper */}
+      <div className="relative z-10">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1274,6 +1288,7 @@ const MiniCourse = () => {
             <Icon name="ChevronRight" size={16} className="ml-2" />
           </Button>
         </div>
+      </div>
       </div>
     </div>
   );
