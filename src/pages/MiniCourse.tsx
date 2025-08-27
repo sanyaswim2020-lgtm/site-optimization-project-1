@@ -118,8 +118,8 @@ const MiniCourse = () => {
     if (dataParam) {
       try {
         const decodedData = JSON.parse(atob(dataParam));
-        const cleanedData = cleanVideoData(decodedData);
-        setCourseData(cleanedData);
+        const restoredData = restoreVideoURLs(decodedData);
+        setCourseData(restoredData);
         if (stageParam) {
           setCurrentStage(parseInt(stageParam));
         }
@@ -136,8 +136,8 @@ const MiniCourse = () => {
     if (savedCourseData) {
       try {
         const parsedData = JSON.parse(savedCourseData);
-        const cleanedData = cleanVideoData(parsedData);
-        setCourseData(cleanedData);
+        const restoredData = restoreVideoURLs(parsedData);
+        setCourseData(restoredData);
       } catch (e) {
         console.error('Error loading course data:', e);
       }
@@ -148,18 +148,48 @@ const MiniCourse = () => {
     }
   }, [courseId]);
 
-  // Функция для подготовки данных - сохраняем только постоянные ссылки
-  const cleanVideoData = (data: typeof courseData) => {
+  // Функция для восстановления видео из base64
+  const restoreVideoURLs = (data: typeof courseData) => {
+    if (!data || !Array.isArray(data)) return [];
+    
+    return data.map(stage => {
+      if (stage && stage.type === 'video' && stage.videos) {
+        const updatedVideos = stage.videos.map(video => {
+          // Если есть base64 данные, восстанавливаем blob URL
+          if (video.base64Data && !video.url?.startsWith('blob:')) {
+            try {
+              const byteCharacters = atob(video.base64Data.split(',')[1]);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'video/mp4' });
+              const blobUrl = URL.createObjectURL(blob);
+              
+              return { ...video, url: blobUrl };
+            } catch (error) {
+              console.error('Error restoring video from base64:', error);
+              return video;
+            }
+          }
+          return video;
+        });
+        return { ...stage, videos: updatedVideos };
+      }
+      return stage || {};
+    });
+  };
+
+  // Функция для подготовки данных к сохранению в URL (без blob URLs)
+  const prepareDataForURL = (data: typeof courseData) => {
     if (!data || !Array.isArray(data)) return [];
     
     return data.map(stage => {
       if (stage && stage.type === 'video' && stage.videos) {
         const updatedVideos = stage.videos.map(video => ({
           ...video,
-          // Сохраняем только постоянные ссылки (серверные), временные убираем
-          url: video.isTemporary ? '' : video.url,
-          base64Data: undefined, // Убираем base64 данные
-          isTemporary: undefined // Убираем флаг временности при сохранении
+          url: undefined // Убираем blob URLs из URL, base64 остается
         }));
         return { ...stage, videos: updatedVideos };
       }
@@ -172,8 +202,8 @@ const MiniCourse = () => {
     if (!courseData || courseData.length === 0) return;
     
     try {
-      // Очищаем данные от blob URLs и base64 для URL
-      const dataForUrl = cleanVideoData(courseData);
+      // Готовим данные для URL (без blob URLs, но с base64)
+      const dataForUrl = prepareDataForURL(courseData);
       
       const encodedData = btoa(JSON.stringify(dataForUrl));
       const url = new URL(window.location.href);
@@ -186,6 +216,42 @@ const MiniCourse = () => {
   };
 
   // Убрали автоматическое сохранение - теперь сохраняем вручную в функциях создания/изменения
+
+  // useEffect для восстановления видео при изменении данных (при загрузке из URL/localStorage)
+  useEffect(() => {
+    if (courseData.length === 0) return;
+    
+    let needsUpdate = false;
+    const updatedData = courseData.map(stage => {
+      if (stage.type === 'video') {
+        const updatedVideos = stage.videos.map(video => {
+          // Если есть base64 но нет blob URL, восстанавливаем
+          if (video.base64Data && (!video.url || !video.url.startsWith('blob:'))) {
+            try {
+              const byteCharacters = atob(video.base64Data.split(',')[1]);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'video/mp4' });
+              needsUpdate = true;
+              return { ...video, url: URL.createObjectURL(blob) };
+            } catch (error) {
+              console.error('Error restoring video:', error);
+            }
+          }
+          return video;
+        });
+        return { ...stage, videos: updatedVideos };
+      }
+      return stage;
+    });
+    
+    if (needsUpdate) {
+      setCourseData(updatedData);
+    }
+  }, [courseData.length]); // Срабатывает только при изменении количества этапов
 
   // Простая функция для создания бэкапа (вызывается вручную)
   const createBackupData = () => {
@@ -258,6 +324,13 @@ const MiniCourse = () => {
   const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>, videoIndex: number) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Проверяем размер файла
+      const maxSize = 50 * 1024 * 1024; // 50 MB
+      if (file.size > maxSize) {
+        alert('Размер видеофайла превышает 50 МБ. Пожалуйста, выберите файл меньшего размера.');
+        return;
+      }
+
       // Показываем состояние загрузки
       const updatedVideos = [...newVideo.videos];
       updatedVideos[videoIndex] = { 
@@ -267,40 +340,33 @@ const MiniCourse = () => {
       };
       setNewVideo({ ...newVideo, videos: updatedVideos });
 
-      try {
-        // Загружаем видео на сервер
-        const formData = new FormData();
-        formData.append('video', file);
-        
-        const response = await fetch('/api/upload-video', {
-          method: 'POST',
-          body: formData,
-        });
+      // Создаем blob URL для немедленного воспроизведения
+      const blobUrl = URL.createObjectURL(file);
 
-        if (response.ok) {
-          const result = await response.json();
-          // Обновляем с постоянной ссылкой
-          updatedVideos[videoIndex] = { 
-            ...updatedVideos[videoIndex], 
-            url: result.url,
-            fileName: file.name
-          };
-        } else {
-          throw new Error('Ошибка загрузки видео на сервер');
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        // В случае ошибки создаем временный URL и предупреждаем пользователя
+      // Конвертируем в base64 для постоянного хранения
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Data = e.target?.result as string;
         updatedVideos[videoIndex] = { 
           ...updatedVideos[videoIndex], 
-          url: URL.createObjectURL(file),
-          fileName: file.name,
-          isTemporary: true
+          url: blobUrl,
+          base64Data: base64Data,
+          fileName: file.name
         };
-        alert('Не удалось загрузить видео на сервер. Видео будет доступно только в текущей сессии.');
-      }
-      
-      setNewVideo({ ...newVideo, videos: updatedVideos });
+        setNewVideo({ ...newVideo, videos: updatedVideos });
+      };
+
+      reader.onerror = () => {
+        alert('Ошибка при чтении файла');
+        updatedVideos[videoIndex] = { 
+          ...updatedVideos[videoIndex], 
+          url: '',
+          fileName: ''
+        };
+        setNewVideo({ ...newVideo, videos: updatedVideos });
+      };
+
+      reader.readAsDataURL(file);
     }
   };
 
@@ -976,11 +1042,7 @@ const MiniCourse = () => {
                             </Button>
                             {video.url && video.url !== 'uploading...' && (
                               <div className="mt-1">
-                                {video.isTemporary ? (
-                                  <p className="text-sm text-amber-600">⚠️ Видео временное (только в текущей сессии)</p>
-                                ) : (
-                                  <p className="text-sm text-green-600">✓ Видео загружено на сервер</p>
-                                )}
+                                <p className="text-sm text-green-600">✓ Видео загружено и сохранено</p>
                                 {video.fileName && (
                                   <p className="text-xs text-gray-500">{video.fileName}</p>
                                 )}
