@@ -123,13 +123,7 @@ const MiniCourse = () => {
       setCurrentStage(parseInt(savedCurrentStage));
     }
     
-    if (savedTestAnswers) {
-      try {
-        setTestAnswers(JSON.parse(savedTestAnswers));
-      } catch (e) {
-        console.error('Error loading test answers:', e);
-      }
-    }
+    // Не загружаем сохранённые ответы - пусть пользователи проходят тест заново
   }, [courseId]);
 
   // Save course data to localStorage whenever it changes
@@ -173,11 +167,7 @@ const MiniCourse = () => {
     }
   }, [currentStage, courseData]);
 
-  // Save test answers to localStorage whenever they change
-  useEffect(() => {
-    if (!courseId || Object.keys(testAnswers).length === 0) return;
-    localStorage.setItem(`minicourse-${courseId}-answers`, JSON.stringify(testAnswers));
-  }, [testAnswers, courseId]);
+  // Не сохраняем ответы теста - пусть каждый раз проходят заново
 
   // Backup and restore functions
   const createBackup = () => {
