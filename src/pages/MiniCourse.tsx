@@ -20,6 +20,7 @@ interface VideoStage {
     url?: string;
     base64Data?: string;
     fileName?: string;
+    isTemporary?: boolean;
     files: {
       id: string;
       name: string;
@@ -147,7 +148,7 @@ const MiniCourse = () => {
     }
   }, [courseId]);
 
-  // Упрощенная функция - больше не восстанавливаем base64
+  // Функция для подготовки данных - сохраняем только постоянные ссылки
   const cleanVideoData = (data: typeof courseData) => {
     if (!data || !Array.isArray(data)) return [];
     
@@ -155,8 +156,10 @@ const MiniCourse = () => {
       if (stage && stage.type === 'video' && stage.videos) {
         const updatedVideos = stage.videos.map(video => ({
           ...video,
-          url: '', // Очищаем URL при загрузке - видео нужно будет загрузить заново
-          base64Data: undefined // Убираем base64 данные
+          // Сохраняем только постоянные ссылки (серверные), временные убираем
+          url: video.isTemporary ? '' : video.url,
+          base64Data: undefined, // Убираем base64 данные
+          isTemporary: undefined // Убираем флаг временности при сохранении
         }));
         return { ...stage, videos: updatedVideos };
       }
@@ -252,19 +255,51 @@ const MiniCourse = () => {
     linkElement.click();
   };
 
-  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>, videoIndex: number) => {
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>, videoIndex: number) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Создаем URL для воспроизведения
-      const videoUrl = URL.createObjectURL(file);
-      
-      // Простое сохранение без base64 - видео будет доступно только в текущей сессии
+      // Показываем состояние загрузки
       const updatedVideos = [...newVideo.videos];
       updatedVideos[videoIndex] = { 
         ...updatedVideos[videoIndex], 
-        url: videoUrl,
+        url: 'uploading...',
         fileName: file.name
       };
+      setNewVideo({ ...newVideo, videos: updatedVideos });
+
+      try {
+        // Загружаем видео на сервер
+        const formData = new FormData();
+        formData.append('video', file);
+        
+        const response = await fetch('/api/upload-video', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          // Обновляем с постоянной ссылкой
+          updatedVideos[videoIndex] = { 
+            ...updatedVideos[videoIndex], 
+            url: result.url,
+            fileName: file.name
+          };
+        } else {
+          throw new Error('Ошибка загрузки видео на сервер');
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        // В случае ошибки создаем временный URL и предупреждаем пользователя
+        updatedVideos[videoIndex] = { 
+          ...updatedVideos[videoIndex], 
+          url: URL.createObjectURL(file),
+          fileName: file.name,
+          isTemporary: true
+        };
+        alert('Не удалось загрузить видео на сервер. Видео будет доступно только в текущей сессии.');
+      }
+      
       setNewVideo({ ...newVideo, videos: updatedVideos });
     }
   };
@@ -717,11 +752,11 @@ const MiniCourse = () => {
                                 Ваш браузер не поддерживает видео.
                               </video>
                             ) : (
-                              <div className="w-full h-48 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-center">
+                              <div className="w-full h-48 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center">
                                 <div className="text-center">
-                                  <Icon name="Video" size={32} className="mx-auto mb-2 text-amber-500" />
-                                  <p className="text-sm text-amber-700 font-medium">Видео нужно загрузить заново</p>
-                                  <p className="text-xs text-amber-600 mt-1">Видеофайлы не сохраняются между сессиями</p>
+                                  <Icon name="Video" size={32} className="mx-auto mb-2 text-gray-400" />
+                                  <p className="text-sm text-gray-600 font-medium">Видео не загружено</p>
+                                  <p className="text-xs text-gray-500 mt-1">Загрузите видео в режиме редактирования</p>
                                 </div>
                               </div>
                             )}
@@ -925,12 +960,31 @@ const MiniCourse = () => {
                               onClick={() => document.getElementById(`video-upload-${index}`)?.click()} 
                               variant="outline" 
                               className="w-full"
+                              disabled={video.url === 'uploading...'}
                             >
-                              <Icon name="Upload" size={16} className="mr-2" />
-                              {video.url ? 'Изменить видео' : 'Загрузить видео'}
+                              {video.url === 'uploading...' ? (
+                                <>
+                                  <Icon name="Loader2" size={16} className="mr-2 animate-spin" />
+                                  Загрузка на сервер...
+                                </>
+                              ) : (
+                                <>
+                                  <Icon name="Upload" size={16} className="mr-2" />
+                                  {video.url ? 'Изменить видео' : 'Загрузить видео'}
+                                </>
+                              )}
                             </Button>
-                            {video.url && (
-                              <p className="text-sm text-green-600 mt-1">✓ Видео загружено</p>
+                            {video.url && video.url !== 'uploading...' && (
+                              <div className="mt-1">
+                                {video.isTemporary ? (
+                                  <p className="text-sm text-amber-600">⚠️ Видео временное (только в текущей сессии)</p>
+                                ) : (
+                                  <p className="text-sm text-green-600">✓ Видео загружено на сервер</p>
+                                )}
+                                {video.fileName && (
+                                  <p className="text-xs text-gray-500">{video.fileName}</p>
+                                )}
+                              </div>
                             )}
                           </div>
 
@@ -1246,7 +1300,7 @@ const MiniCourse = () => {
                           <Icon name="Info" size={16} className="text-amber-600 mt-0.5" />
                           <div className="text-sm text-amber-800">
                             <p className="font-medium mb-1">Сохранение данных</p>
-                            <p>Структура курса и тексты сохраняются автоматически. <strong>Видеофайлы не сохраняются</strong> между сессиями - их нужно загружать заново при каждом открытии.</p>
+                            <p>Структура курса, тексты и <strong>загруженные видео</strong> сохраняются автоматически на сервере. Курс доступен по ссылке с любого устройства со всеми материалами.</p>
                           </div>
                         </div>
                       </div>
