@@ -89,7 +89,7 @@ const MiniCourse = () => {
     title: '', 
     description: '', 
     duration: '',
-    videos: [{ id: '1', title: 'Видео 1', url: '' }]
+    videos: [{ id: '1', title: 'Видео 1', url: '', description: '' }]
   });
   const [newTest, setNewTest] = useState({
     title: '',
@@ -221,7 +221,7 @@ const MiniCourse = () => {
     const newVideoId = `v${newVideo.videos.length + 1}`;
     setNewVideo({
       ...newVideo,
-      videos: [...newVideo.videos, { id: newVideoId, title: `Видео ${newVideo.videos.length + 1}`, url: '' }]
+      videos: [...newVideo.videos, { id: newVideoId, title: `Видео ${newVideo.videos.length + 1}`, url: '', description: '' }]
     });
   };
 
@@ -251,7 +251,7 @@ const MiniCourse = () => {
         title: '', 
         description: '', 
         duration: '',
-        videos: [{ id: '1', title: 'Видео 1', url: '' }]
+        videos: [{ id: '1', title: 'Видео 1', url: '', description: '' }]
       });
     }
   };
@@ -323,7 +323,8 @@ const MiniCourse = () => {
             {
               id: 'v1',
               title: 'Основы квантовой механики',
-              url: 'https://rutube.ru/video/example123/'
+              url: 'https://rutube.ru/video/example123/',
+              description: 'Введение в квантовую механику для начинающих'
             }
           ]
         },
@@ -486,7 +487,7 @@ const MiniCourse = () => {
         title: '', 
         description: '', 
         duration: '',
-        videos: [{ id: '1', title: 'Видео 1', url: '' }]
+        videos: [{ id: '1', title: 'Видео 1', url: '', description: '' }]
       });
     } else {
       updatedCourseData[stageIndex] = {
@@ -517,7 +518,7 @@ const MiniCourse = () => {
       title: '', 
       description: '', 
       duration: '',
-      videos: [{ id: '1', title: 'Видео 1', url: '', files: [] }]
+      videos: [{ id: '1', title: 'Видео 1', url: '', description: '' }]
     });
     setNewTest({
       title: '',
