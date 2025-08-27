@@ -18,6 +18,8 @@ interface VideoStage {
     id: string;
     title: string;
     url?: string;
+    base64Data?: string;
+    fileName?: string;
     files: {
       id: string;
       name: string;
@@ -126,6 +128,34 @@ const MiniCourse = () => {
     // Не загружаем сохранённые ответы - пусть пользователи проходят тест заново
   }, [courseId]);
 
+  // Восстанавливаем blob URLs из base64 данных при загрузке курса
+  useEffect(() => {
+    const updatedCourseData = courseData.map(stage => {
+      if (stage.type === 'video') {
+        const updatedVideos = stage.videos.map(video => {
+          if (video.base64Data && !video.url?.startsWith('blob:')) {
+            // Конвертируем base64 обратно в blob URL
+            const byteCharacters = atob(video.base64Data.split(',')[1]);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'video/mp4' });
+            return { ...video, url: URL.createObjectURL(blob) };
+          }
+          return video;
+        });
+        return { ...stage, videos: updatedVideos };
+      }
+      return stage;
+    });
+    
+    if (JSON.stringify(updatedCourseData) !== JSON.stringify(courseData)) {
+      setCourseData(updatedCourseData);
+    }
+  }, [courseData]);
+
   // Save course data to localStorage whenever it changes
   useEffect(() => {
     if (!courseId) return;
@@ -214,10 +244,23 @@ const MiniCourse = () => {
   const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>, videoIndex: number) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Создаем URL для немедленного воспроизведения
       const videoUrl = URL.createObjectURL(file);
-      const updatedVideos = [...newVideo.videos];
-      updatedVideos[videoIndex] = { ...updatedVideos[videoIndex], url: videoUrl };
-      setNewVideo({ ...newVideo, videos: updatedVideos });
+      
+      // Конвертируем файл в base64 для долгосрочного хранения
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string;
+        const updatedVideos = [...newVideo.videos];
+        updatedVideos[videoIndex] = { 
+          ...updatedVideos[videoIndex], 
+          url: videoUrl,
+          base64Data: base64, // Сохраняем base64 для восстановления после перезагрузки
+          fileName: file.name
+        };
+        setNewVideo({ ...newVideo, videos: updatedVideos });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
