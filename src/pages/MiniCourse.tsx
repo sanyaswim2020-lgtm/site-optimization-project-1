@@ -43,7 +43,6 @@ type CourseStage = VideoStage | TestStage;
 const MiniCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [currentStage, setCurrentStage] = useState(0);
   const [isAdminMode, setIsAdminMode] = useState(false);
@@ -173,20 +172,7 @@ const MiniCourse = () => {
   }, [currentStage, courseId]);
 
   // Force video reload when stage changes
-  useEffect(() => {
-    const currentStageData = courseData[currentStage];
-    if (currentStageData?.type === 'video') {
-      // Small delay to ensure DOM is updated
-      const timer = setTimeout(() => {
-        videoRefs.current.forEach((video) => {
-          if (video) {
-            video.load(); // Force reload of video element
-          }
-        });
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [currentStage, courseData]);
+
 
   // Не сохраняем ответы теста - пусть каждый раз проходят заново
 
