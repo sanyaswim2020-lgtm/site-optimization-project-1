@@ -96,6 +96,7 @@ const MiniCourse = () => {
     questions: [{ question: '', options: ['', '', ''], correctAnswer: 0, explanation: '' }]
   });
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Load data from URL parameters or localStorage on component mount
   useEffect(() => {
@@ -151,6 +152,30 @@ const MiniCourse = () => {
       console.error('Error updating URL:', e);
     }
   };
+
+  // Автоматическая синхронизация: обновляем URL при любых изменениях данных или этапа
+  useEffect(() => {
+    // Только если данные уже загружены и не пустые
+    if (courseData.length === 0) return;
+    
+    setIsSyncing(true);
+    
+    // Небольшая задержка чтобы избежать частых обновлений URL
+    const timer = setTimeout(() => {
+      updateURLWithData();
+      setIsSyncing(false);
+      
+      // Показать ненавязчивое уведомление о синхронизации (только для админ режима)
+      if (isAdminMode) {
+        console.log('🔄 Данные курса синхронизированы с URL. Ссылка обновлена для доступа с других устройств.');
+      }
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+      setIsSyncing(false);
+    };
+  }, [courseData, currentStage, isAdminMode]);
 
   // Простая функция для создания бэкапа (вызывается вручную)
   const createBackupData = () => {
@@ -573,6 +598,12 @@ const MiniCourse = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              {isSyncing && (
+                <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-full">
+                  <Icon name="Loader2" size={14} className="animate-spin text-blue-600" />
+                  <span className="text-xs text-blue-600">Синхронизация...</span>
+                </div>
+              )}
               <Button
                 variant={isAdminMode ? "default" : "outline"}
                 size="sm"
@@ -1176,7 +1207,7 @@ const MiniCourse = () => {
                           <div>
                             <h4 className="font-medium text-purple-800">Поделиться курсом</h4>
                             <p className="text-sm text-purple-600 mt-1">
-                              Получить ссылку для доступа с других устройств
+                              Ссылка автоматически обновляется при изменениях. Копируйте для доступа с других устройств
                             </p>
                           </div>
                           <Button
