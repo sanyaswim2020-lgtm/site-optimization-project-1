@@ -126,16 +126,22 @@ const MiniCourse = () => {
 
   // Функция для обновления URL с данными
   const updateURLWithData = () => {
-    if (!courseData || courseData.length === 0) return;
+    if (!courseData || courseData.length === 0) {
+      console.log('❌ URL не обновлен: нет данных курса');
+      return;
+    }
     
     try {
-      const encodedData = btoa(JSON.stringify(courseData));
+      const dataString = JSON.stringify(courseData);
+      const encodedData = btoa(dataString);
       const url = new URL(window.location.href);
       url.searchParams.set('data', encodedData);
       url.searchParams.set('stage', currentStage.toString());
       window.history.replaceState({}, '', url.toString());
+      
+      console.log(`✅ URL обновлен: ${courseData.length} этапов, данные ${Math.round(encodedData.length/1024)}KB`);
     } catch (e) {
-      console.error('Error updating URL:', e);
+      console.error('❌ Ошибка обновления URL:', e);
     }
   };
 
@@ -1192,22 +1198,39 @@ const MiniCourse = () => {
                               Ссылка автоматически обновляется при изменениях. Копируйте для доступа с других устройств
                             </p>
                           </div>
-                          <Button
-                            onClick={() => {
-                              updateURLWithData();
-                              navigator.clipboard.writeText(window.location.href).then(() => {
-                                alert('Ссылка скопирована в буфер обмена! Теперь курс можно открыть на любом устройстве.');
-                              }).catch(() => {
-                                alert('Ссылка обновлена в адресной строке. Скопируйте её для доступа с других устройств.');
-                              });
-                            }}
-                            variant="outline"
-                            size="sm"
-                            className="border-purple-300 text-purple-700 hover:bg-purple-100"
-                          >
-                            <Icon name="Share2" size={16} className="mr-2" />
-                            Поделиться
-                          </Button>
+                          <div className="space-y-2">
+                            <Button
+                              onClick={() => {
+                                updateURLWithData();
+                                const currentUrl = window.location.href;
+                                navigator.clipboard.writeText(currentUrl).then(() => {
+                                  alert(`Ссылка скопирована! URL содержит ${courseData.length} этапов. Длина данных: ${currentUrl.length} символов.`);
+                                }).catch(() => {
+                                  alert('Ссылка обновлена в адресной строке. Скопируйте её для доступа с других устройств.');
+                                });
+                              }}
+                              variant="outline"
+                              size="sm"
+                              className="border-purple-300 text-purple-700 hover:bg-purple-100 w-full"
+                            >
+                              <Icon name="Share2" size={16} className="mr-2" />
+                              Поделиться
+                            </Button>
+                            
+                            <Button
+                              onClick={() => {
+                                const currentUrl = window.location.href;
+                                const hasData = currentUrl.includes('?data=');
+                                alert(`Отладка URL:\n\nЕсть данные в URL: ${hasData ? 'ДА' : 'НЕТ'}\nКоличество этапов: ${courseData.length}\nДлина URL: ${currentUrl.length}\n\nURL: ${currentUrl}`);
+                              }}
+                              variant="outline"
+                              size="sm"
+                              className="border-blue-300 text-blue-700 hover:bg-blue-100 w-full"
+                            >
+                              <Icon name="Bug" size={16} className="mr-2" />
+                              Показать URL
+                            </Button>
+                          </div>
                         </div>
                         
                         <div className="flex items-center justify-between p-4 border border-green-200 rounded-lg bg-green-50">
