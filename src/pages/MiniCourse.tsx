@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
+import RutubePlayer from '@/components/RutubePlayer';
 
 interface VideoStage {
   id: string;
@@ -17,16 +18,8 @@ interface VideoStage {
   videos: {
     id: string;
     title: string;
-    url?: string;
-    base64Data?: string;
-    fileName?: string;
-    isTemporary?: boolean;
-    files: {
-      id: string;
-      name: string;
-      url: string;
-      type: string;
-    }[];
+    url: string; // Теперь только URL на Rutube
+    description?: string;
   }[];
   description: string;
   duration: string;
@@ -65,8 +58,8 @@ const MiniCourse = () => {
         {
           id: 'v1',
           title: 'Основы квантовой механики',
-          url: 'https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4',
-          files: []
+          url: 'https://rutube.ru/video/example123/',
+          description: 'Введение в квантовую механику для начинающих'
         }
       ]
     },
@@ -97,14 +90,13 @@ const MiniCourse = () => {
     title: '', 
     description: '', 
     duration: '',
-    videos: [{ id: '1', title: 'Видео 1', url: '', files: [] }]
+    videos: [{ id: '1', title: 'Видео 1', url: '' }]
   });
   const [newTest, setNewTest] = useState({
     title: '',
     questions: [{ question: '', options: ['', '', ''], correctAnswer: 0, explanation: '' }]
   });
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   // Load data from URL parameters or localStorage on component mount
   useEffect(() => {
@@ -118,8 +110,7 @@ const MiniCourse = () => {
     if (dataParam) {
       try {
         const decodedData = JSON.parse(atob(dataParam));
-        const restoredData = restoreVideoURLs(decodedData);
-        setCourseData(restoredData);
+        setCourseData(decodedData);
         if (stageParam) {
           setCurrentStage(parseInt(stageParam));
         }
@@ -136,8 +127,7 @@ const MiniCourse = () => {
     if (savedCourseData) {
       try {
         const parsedData = JSON.parse(savedCourseData);
-        const restoredData = restoreVideoURLs(parsedData);
-        setCourseData(restoredData);
+        setCourseData(parsedData);
       } catch (e) {
         console.error('Error loading course data:', e);
       }
@@ -148,64 +138,12 @@ const MiniCourse = () => {
     }
   }, [courseId]);
 
-  // Функция для восстановления видео из base64
-  const restoreVideoURLs = (data: typeof courseData) => {
-    if (!data || !Array.isArray(data)) return [];
-    
-    return data.map(stage => {
-      if (stage && stage.type === 'video' && stage.videos) {
-        const updatedVideos = stage.videos.map(video => {
-          // Если есть base64 данные, восстанавливаем blob URL
-          if (video.base64Data && !video.url?.startsWith('blob:')) {
-            try {
-              const byteCharacters = atob(video.base64Data.split(',')[1]);
-              const byteNumbers = new Array(byteCharacters.length);
-              for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-              }
-              const byteArray = new Uint8Array(byteNumbers);
-              const blob = new Blob([byteArray], { type: 'video/mp4' });
-              const blobUrl = URL.createObjectURL(blob);
-              
-              return { ...video, url: blobUrl };
-            } catch (error) {
-              console.error('Error restoring video from base64:', error);
-              return video;
-            }
-          }
-          return video;
-        });
-        return { ...stage, videos: updatedVideos };
-      }
-      return stage || {};
-    });
-  };
-
-  // Функция для подготовки данных к сохранению в URL (без blob URLs)
-  const prepareDataForURL = (data: typeof courseData) => {
-    if (!data || !Array.isArray(data)) return [];
-    
-    return data.map(stage => {
-      if (stage && stage.type === 'video' && stage.videos) {
-        const updatedVideos = stage.videos.map(video => ({
-          ...video,
-          url: undefined // Убираем blob URLs из URL, base64 остается
-        }));
-        return { ...stage, videos: updatedVideos };
-      }
-      return stage || {};
-    });
-  };
-
   // Функция для обновления URL с данными
   const updateURLWithData = () => {
     if (!courseData || courseData.length === 0) return;
     
     try {
-      // Готовим данные для URL (без blob URLs, но с base64)
-      const dataForUrl = prepareDataForURL(courseData);
-      
-      const encodedData = btoa(JSON.stringify(dataForUrl));
+      const encodedData = btoa(JSON.stringify(courseData));
       const url = new URL(window.location.href);
       url.searchParams.set('data', encodedData);
       url.searchParams.set('stage', currentStage.toString());
@@ -214,44 +152,6 @@ const MiniCourse = () => {
       console.error('Error updating URL:', e);
     }
   };
-
-  // Убрали автоматическое сохранение - теперь сохраняем вручную в функциях создания/изменения
-
-  // useEffect для восстановления видео при изменении данных (при загрузке из URL/localStorage)
-  useEffect(() => {
-    if (courseData.length === 0) return;
-    
-    let needsUpdate = false;
-    const updatedData = courseData.map(stage => {
-      if (stage.type === 'video') {
-        const updatedVideos = stage.videos.map(video => {
-          // Если есть base64 но нет blob URL, восстанавливаем
-          if (video.base64Data && (!video.url || !video.url.startsWith('blob:'))) {
-            try {
-              const byteCharacters = atob(video.base64Data.split(',')[1]);
-              const byteNumbers = new Array(byteCharacters.length);
-              for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-              }
-              const byteArray = new Uint8Array(byteNumbers);
-              const blob = new Blob([byteArray], { type: 'video/mp4' });
-              needsUpdate = true;
-              return { ...video, url: URL.createObjectURL(blob) };
-            } catch (error) {
-              console.error('Error restoring video:', error);
-            }
-          }
-          return video;
-        });
-        return { ...stage, videos: updatedVideos };
-      }
-      return stage;
-    });
-    
-    if (needsUpdate) {
-      setCourseData(updatedData);
-    }
-  }, [courseData.length]); // Срабатывает только при изменении количества этапов
 
   // Простая функция для создания бэкапа (вызывается вручную)
   const createBackupData = () => {
@@ -321,76 +221,21 @@ const MiniCourse = () => {
     linkElement.click();
   };
 
-  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>, videoIndex: number) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Проверяем размер файла
-      const maxSize = 50 * 1024 * 1024; // 50 MB
-      if (file.size > maxSize) {
-        alert('Размер видеофайла превышает 50 МБ. Пожалуйста, выберите файл меньшего размера.');
-        return;
-      }
-
-      // Показываем состояние загрузки
-      const updatedVideos = [...newVideo.videos];
-      updatedVideos[videoIndex] = { 
-        ...updatedVideos[videoIndex], 
-        url: 'uploading...',
-        fileName: file.name
-      };
-      setNewVideo({ ...newVideo, videos: updatedVideos });
-
-      // Создаем blob URL для немедленного воспроизведения
-      const blobUrl = URL.createObjectURL(file);
-
-      // Конвертируем в base64 для постоянного хранения
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64Data = e.target?.result as string;
-        updatedVideos[videoIndex] = { 
-          ...updatedVideos[videoIndex], 
-          url: blobUrl,
-          base64Data: base64Data,
-          fileName: file.name
-        };
-        setNewVideo({ ...newVideo, videos: updatedVideos });
-      };
-
-      reader.onerror = () => {
-        alert('Ошибка при чтении файла');
-        updatedVideos[videoIndex] = { 
-          ...updatedVideos[videoIndex], 
-          url: '',
-          fileName: ''
-        };
-        setNewVideo({ ...newVideo, videos: updatedVideos });
-      };
-
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, videoIndex: number) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const fileUrl = URL.createObjectURL(file);
-      const updatedVideos = [...newVideo.videos];
-      const newFile = {
-        id: `file-${Date.now()}`,
-        name: file.name,
-        url: fileUrl,
-        type: file.type
-      };
-      updatedVideos[videoIndex].files.push(newFile);
-      setNewVideo({ ...newVideo, videos: updatedVideos });
-    }
+  // Функция для обновления URL видео
+  const handleVideoUrlChange = (videoIndex: number, url: string) => {
+    const updatedVideos = [...newVideo.videos];
+    updatedVideos[videoIndex] = { 
+      ...updatedVideos[videoIndex], 
+      url: url
+    };
+    setNewVideo({ ...newVideo, videos: updatedVideos });
   };
 
   const addVideoToStage = () => {
     const newVideoId = `v${newVideo.videos.length + 1}`;
     setNewVideo({
       ...newVideo,
-      videos: [...newVideo.videos, { id: newVideoId, title: `Видео ${newVideo.videos.length + 1}`, url: '', files: [] }]
+      videos: [...newVideo.videos, { id: newVideoId, title: `Видео ${newVideo.videos.length + 1}`, url: '' }]
     });
   };
 
@@ -420,7 +265,7 @@ const MiniCourse = () => {
         title: '', 
         description: '', 
         duration: '',
-        videos: [{ id: '1', title: 'Видео 1', url: '', files: [] }]
+        videos: [{ id: '1', title: 'Видео 1', url: '' }]
       });
     }
   };
@@ -492,8 +337,7 @@ const MiniCourse = () => {
             {
               id: 'v1',
               title: 'Основы квантовой механики',
-              url: '',
-              files: []
+              url: 'https://rutube.ru/video/example123/'
             }
           ]
         },
@@ -656,7 +500,7 @@ const MiniCourse = () => {
         title: '', 
         description: '', 
         duration: '',
-        videos: [{ id: '1', title: 'Видео 1', url: '', files: [] }]
+        videos: [{ id: '1', title: 'Видео 1', url: '' }]
       });
     } else {
       updatedCourseData[stageIndex] = {
@@ -796,54 +640,25 @@ const MiniCourse = () => {
                           <h3 className="font-semibold mb-3">{video.title}</h3>
                           <div className="mb-4">
                             {video.url ? (
-                              <video
-                                key={video.url}
-                                ref={(el) => {
-                                  if (el) {
-                                    const globalIndex = videoRefs.current.length;
-                                    videoRefs.current[globalIndex] = el;
-                                  }
-                                }}
-                                controls
-                                preload="metadata"
-                                className="w-full rounded-lg"
-                                src={video.url}
-                                onError={(e) => {
-                                  console.error('Video load error:', e);
-                                }}
-                                onLoadStart={() => {
-                                  console.log('Video loading started:', video.url);
-                                }}
-                              >
-                                Ваш браузер не поддерживает видео.
-                              </video>
+                              <RutubePlayer 
+                                url={video.url}
+                                title={video.title}
+                                className="rounded-lg"
+                              />
                             ) : (
                               <div className="w-full h-48 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center">
                                 <div className="text-center">
                                   <Icon name="Video" size={32} className="mx-auto mb-2 text-gray-400" />
-                                  <p className="text-sm text-gray-600 font-medium">Видео не загружено</p>
-                                  <p className="text-xs text-gray-500 mt-1">Загрузите видео в режиме редактирования</p>
+                                  <p className="text-sm text-gray-600 font-medium">URL видео не добавлен</p>
+                                  <p className="text-xs text-gray-500 mt-1">Добавьте ссылку на Rutube в режиме редактирования</p>
                                 </div>
                               </div>
                             )}
                           </div>
                           
-                          {video.files.length > 0 && (
-                            <div className="space-y-2">
-                              <h4 className="font-medium text-sm text-gray-700">Материалы к видео:</h4>
-                              <div className="grid gap-2">
-                                {video.files.map((file) => (
-                                  <a
-                                    key={file.id}
-                                    href={file.url}
-                                    download={file.name}
-                                    className="flex items-center space-x-2 p-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                                  >
-                                    <Icon name="FileDown" size={16} className="text-blue-600" />
-                                    <span className="text-sm text-blue-800">{file.name}</span>
-                                  </a>
-                                ))}
-                              </div>
+                          {video.description && (
+                            <div className="mt-3">
+                              <p className="text-sm text-gray-600">{video.description}</p>
                             </div>
                           )}
                         </div>
@@ -1014,70 +829,36 @@ const MiniCourse = () => {
                           </div>
                           
                           <div>
-                            <Label>Видеофайл</Label>
-                            <input
-                              type="file"
-                              accept="video/*"
-                              onChange={(e) => handleVideoUpload(e, index)}
-                              className="hidden"
-                              id={`video-upload-${index}`}
-                            />
-                            <Button 
-                              onClick={() => document.getElementById(`video-upload-${index}`)?.click()} 
-                              variant="outline" 
+                            <Label>URL видео на Rutube</Label>
+                            <Input
+                              type="url"
+                              value={video.url}
+                              onChange={(e) => handleVideoUrlChange(index, e.target.value)}
+                              placeholder="https://rutube.ru/video/..."
                               className="w-full"
-                              disabled={video.url === 'uploading...'}
-                            >
-                              {video.url === 'uploading...' ? (
-                                <>
-                                  <Icon name="Loader2" size={16} className="mr-2 animate-spin" />
-                                  Загрузка на сервер...
-                                </>
-                              ) : (
-                                <>
-                                  <Icon name="Upload" size={16} className="mr-2" />
-                                  {video.url ? 'Изменить видео' : 'Загрузить видео'}
-                                </>
-                              )}
-                            </Button>
-                            {video.url && video.url !== 'uploading...' && (
-                              <div className="mt-1">
-                                <p className="text-sm text-green-600">✓ Видео загружено и сохранено</p>
-                                {video.fileName && (
-                                  <p className="text-xs text-gray-500">{video.fileName}</p>
-                                )}
+                            />
+                            {video.url && (
+                              <div className="mt-2">
+                                <p className="text-sm text-green-600">✓ URL видео добавлен</p>
                               </div>
                             )}
                           </div>
 
                           <div>
-                            <Label>Файлы к видео</Label>
-                            <input
-                              type="file"
-                              accept="*/*"
-                              onChange={(e) => handleFileUpload(e, index)}
-                              className="hidden"
-                              id={`file-upload-${index}`}
+                            <Label>Описание видео (опционально)</Label>
+                            <Textarea
+                              value={video.description || ''}
+                              onChange={(e) => {
+                                const updatedVideos = [...newVideo.videos];
+                                updatedVideos[index] = { 
+                                  ...updatedVideos[index], 
+                                  description: e.target.value
+                                };
+                                setNewVideo({ ...newVideo, videos: updatedVideos });
+                              }}
+                              placeholder="Краткое описание видео..."
+                              className="min-h-[60px]"
                             />
-                            <Button 
-                              onClick={() => document.getElementById(`file-upload-${index}`)?.click()} 
-                              variant="outline" 
-                              size="sm" 
-                              className="w-full"
-                            >
-                              <Icon name="Paperclip" size={16} className="mr-2" />
-                              Прикрепить файл
-                            </Button>
-                            {video.files.length > 0 && (
-                              <div className="mt-2 space-y-1">
-                                {video.files.map((file) => (
-                                  <div key={file.id} className="text-sm text-blue-600 flex items-center space-x-1">
-                                    <Icon name="FileText" size={12} />
-                                    <span>{file.name}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
                           </div>
                         </div>
                       ))}
@@ -1494,52 +1275,24 @@ const MiniCourse = () => {
                         <h3 className="font-semibold mb-3">{video.title}</h3>
                         <div className="mb-4">
                           {video.url ? (
-                            <video
-                              key={video.url}
-                              ref={(el) => {
-                                if (el) {
-                                  videoRefs.current[index] = el;
-                                }
-                              }}
-                              controls
-                              preload="metadata"
+                            <RutubePlayer 
+                              url={video.url}
+                              title={video.title}
                               className="w-full rounded-lg"
-                              src={video.url}
-                              onError={(e) => {
-                                console.error('Video load error:', e);
-                              }}
-                              onLoadStart={() => {
-                                console.log('Video loading started:', video.url);
-                              }}
-                            >
-                              Ваш браузер не поддерживает видео.
-                            </video>
+                            />
                           ) : (
                             <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
                               <div className="text-center">
                                 <Icon name="Video" size={32} className="mx-auto mb-2 text-gray-400" />
-                                <p className="text-sm text-gray-500">Видео не загружено</p>
+                                <p className="text-sm text-gray-500">Видео не добавлено</p>
                               </div>
                             </div>
                           )}
                         </div>
                         
-                        {video.files.length > 0 && (
-                          <div className="space-y-2">
-                            <h4 className="font-medium text-sm text-gray-700">Материалы к видео:</h4>
-                            <div className="grid gap-2">
-                              {video.files.map((file) => (
-                                <a
-                                  key={file.id}
-                                  href={file.url}
-                                  download={file.name}
-                                  className="flex items-center space-x-2 p-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                                >
-                                  <Icon name="FileDown" size={16} className="text-blue-600" />
-                                  <span className="text-sm text-blue-800">{file.name}</span>
-                                </a>
-                              ))}
-                            </div>
+                        {video.description && (
+                          <div className="mt-3">
+                            <p className="text-sm text-gray-600">{video.description}</p>
                           </div>
                         )}
                       </div>
