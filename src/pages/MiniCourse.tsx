@@ -117,8 +117,8 @@ const MiniCourse = () => {
     if (dataParam) {
       try {
         const decodedData = JSON.parse(atob(dataParam));
-        const restoredData = restoreBlobURLs(decodedData);
-        setCourseData(restoredData);
+        const cleanedData = cleanVideoData(decodedData);
+        setCourseData(cleanedData);
         if (stageParam) {
           setCurrentStage(parseInt(stageParam));
         }
@@ -135,8 +135,8 @@ const MiniCourse = () => {
     if (savedCourseData) {
       try {
         const parsedData = JSON.parse(savedCourseData);
-        const restoredData = restoreBlobURLs(parsedData);
-        setCourseData(restoredData);
+        const cleanedData = cleanVideoData(parsedData);
+        setCourseData(cleanedData);
       } catch (e) {
         console.error('Error loading course data:', e);
       }
@@ -147,33 +147,17 @@ const MiniCourse = () => {
     }
   }, [courseId]);
 
-  // Восстанавливаем blob URLs из base64 данных
-  const restoreBlobURLs = (data: typeof courseData) => {
+  // Упрощенная функция - больше не восстанавливаем base64
+  const cleanVideoData = (data: typeof courseData) => {
     if (!data || !Array.isArray(data)) return [];
     
     return data.map(stage => {
       if (stage && stage.type === 'video' && stage.videos) {
-        const updatedVideos = stage.videos.map(video => {
-          if (video && video.base64Data && video.base64Data.startsWith('data:') && !video.url?.startsWith('blob:')) {
-            try {
-              // Конвертируем base64 обратно в blob URL
-              const base64Parts = video.base64Data.split(',');
-              if (base64Parts.length > 1) {
-                const byteCharacters = atob(base64Parts[1]);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                  byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], { type: 'video/mp4' });
-                return { ...video, url: URL.createObjectURL(blob) };
-              }
-            } catch (error) {
-              console.error('Error restoring video from base64:', error);
-            }
-          }
-          return video || {};
-        });
+        const updatedVideos = stage.videos.map(video => ({
+          ...video,
+          url: '', // Очищаем URL при загрузке - видео нужно будет загрузить заново
+          base64Data: undefined // Убираем base64 данные
+        }));
         return { ...stage, videos: updatedVideos };
       }
       return stage || {};
@@ -185,19 +169,8 @@ const MiniCourse = () => {
     if (!courseData || courseData.length === 0) return;
     
     try {
-      // Создаем копию данных без blob URLs для сохранения
-      const dataForUrl = courseData.map(stage => {
-        if (stage.type === 'video') {
-          return {
-            ...stage,
-            videos: stage.videos.map(video => ({
-              ...video,
-              url: undefined // Убираем blob URLs из URL
-            }))
-          };
-        }
-        return stage;
-      });
+      // Очищаем данные от blob URLs и base64 для URL
+      const dataForUrl = cleanVideoData(courseData);
       
       const encodedData = btoa(JSON.stringify(dataForUrl));
       const url = new URL(window.location.href);
@@ -282,23 +255,17 @@ const MiniCourse = () => {
   const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>, videoIndex: number) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Создаем URL для немедленного воспроизведения
+      // Создаем URL для воспроизведения
       const videoUrl = URL.createObjectURL(file);
       
-      // Конвертируем файл в base64 для долгосрочного хранения
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64 = e.target?.result as string;
-        const updatedVideos = [...newVideo.videos];
-        updatedVideos[videoIndex] = { 
-          ...updatedVideos[videoIndex], 
-          url: videoUrl,
-          base64Data: base64, // Сохраняем base64 для восстановления после перезагрузки
-          fileName: file.name
-        };
-        setNewVideo({ ...newVideo, videos: updatedVideos });
+      // Простое сохранение без base64 - видео будет доступно только в текущей сессии
+      const updatedVideos = [...newVideo.videos];
+      updatedVideos[videoIndex] = { 
+        ...updatedVideos[videoIndex], 
+        url: videoUrl,
+        fileName: file.name
       };
-      reader.readAsDataURL(file);
+      setNewVideo({ ...newVideo, videos: updatedVideos });
     }
   };
 
@@ -750,10 +717,11 @@ const MiniCourse = () => {
                                 Ваш браузер не поддерживает видео.
                               </video>
                             ) : (
-                              <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <div className="w-full h-48 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-center">
                                 <div className="text-center">
-                                  <Icon name="Video" size={32} className="mx-auto mb-2 text-gray-400" />
-                                  <p className="text-sm text-gray-500">Видео не загружено</p>
+                                  <Icon name="Video" size={32} className="mx-auto mb-2 text-amber-500" />
+                                  <p className="text-sm text-amber-700 font-medium">Видео нужно загрузить заново</p>
+                                  <p className="text-xs text-amber-600 mt-1">Видеофайлы не сохраняются между сессиями</p>
                                 </div>
                               </div>
                             )}
@@ -1277,8 +1245,8 @@ const MiniCourse = () => {
                         <div className="flex items-start space-x-3">
                           <Icon name="Info" size={16} className="text-amber-600 mt-0.5" />
                           <div className="text-sm text-amber-800">
-                            <p className="font-medium mb-1">Автоматическое сохранение</p>
-                            <p>Все изменения в курсе автоматически сохраняются в браузере. Данные восстанавливаются при обновлении страницы.</p>
+                            <p className="font-medium mb-1">Сохранение данных</p>
+                            <p>Структура курса и тексты сохраняются автоматически. <strong>Видеофайлы не сохраняются</strong> между сессиями - их нужно загружать заново при каждом открытии.</p>
                           </div>
                         </div>
                       </div>
