@@ -62,7 +62,7 @@ const MiniCourse = () => {
         {
           id: 'v1',
           title: 'Основы квантовой механики',
-          url: '',
+          url: 'https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4',
           files: []
         }
       ]
