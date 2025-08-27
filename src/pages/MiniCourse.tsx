@@ -105,17 +105,38 @@ const MiniCourse = () => {
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
-  // Load data from localStorage on component mount
+  // Load data from URL parameters or localStorage on component mount
   useEffect(() => {
     if (!courseId) return;
     
+    // Сначала пытаемся загрузить из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const dataParam = urlParams.get('data');
+    const stageParam = urlParams.get('stage');
+    
+    if (dataParam) {
+      try {
+        const decodedData = JSON.parse(atob(dataParam));
+        const restoredData = restoreBlobURLs(decodedData);
+        setCourseData(restoredData);
+        if (stageParam) {
+          setCurrentStage(parseInt(stageParam));
+        }
+        return;
+      } catch (e) {
+        console.error('Error loading data from URL:', e);
+      }
+    }
+    
+    // Если в URL нет данных, пытаемся загрузить из localStorage
     const savedCourseData = localStorage.getItem(`minicourse-${courseId}-data`);
     const savedCurrentStage = localStorage.getItem(`minicourse-${courseId}-stage`);
-    const savedTestAnswers = localStorage.getItem(`minicourse-${courseId}-answers`);
     
     if (savedCourseData) {
       try {
-        setCourseData(JSON.parse(savedCourseData));
+        const parsedData = JSON.parse(savedCourseData);
+        const restoredData = restoreBlobURLs(parsedData);
+        setCourseData(restoredData);
       } catch (e) {
         console.error('Error loading course data:', e);
       }
@@ -124,25 +145,28 @@ const MiniCourse = () => {
     if (savedCurrentStage) {
       setCurrentStage(parseInt(savedCurrentStage));
     }
-    
-    // Не загружаем сохранённые ответы - пусть пользователи проходят тест заново
   }, [courseId]);
 
-  // Восстанавливаем blob URLs из base64 данных при загрузке курса
-  useEffect(() => {
-    const updatedCourseData = courseData.map(stage => {
+  // Восстанавливаем blob URLs из base64 данных
+  const restoreBlobURLs = (data: typeof courseData) => {
+    return data.map(stage => {
       if (stage.type === 'video') {
         const updatedVideos = stage.videos.map(video => {
-          if (video.base64Data && !video.url?.startsWith('blob:')) {
-            // Конвертируем base64 обратно в blob URL
-            const byteCharacters = atob(video.base64Data.split(',')[1]);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
+          if (video.base64Data && video.base64Data.startsWith('data:') && !video.url?.startsWith('blob:')) {
+            try {
+              // Конвертируем base64 обратно в blob URL
+              const byteCharacters = atob(video.base64Data.split(',')[1]);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'video/mp4' });
+              return { ...video, url: URL.createObjectURL(blob) };
+            } catch (error) {
+              console.error('Error restoring video from base64:', error);
+              return video;
             }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: 'video/mp4' });
-            return { ...video, url: URL.createObjectURL(blob) };
           }
           return video;
         });
@@ -150,17 +174,33 @@ const MiniCourse = () => {
       }
       return stage;
     });
+  };
+
+  // Функция для обновления URL с данными
+  const updateURLWithData = () => {
+    if (courseData.length === 0) return;
     
-    if (JSON.stringify(updatedCourseData) !== JSON.stringify(courseData)) {
-      setCourseData(updatedCourseData);
+    try {
+      const encodedData = btoa(JSON.stringify(courseData));
+      const url = new URL(window.location.href);
+      url.searchParams.set('data', encodedData);
+      url.searchParams.set('stage', currentStage.toString());
+      window.history.replaceState({}, '', url.toString());
+    } catch (e) {
+      console.error('Error updating URL:', e);
     }
-  }, [courseData]);
+  };
 
   // Save course data to localStorage whenever it changes
   useEffect(() => {
     if (!courseId) return;
     localStorage.setItem(`minicourse-${courseId}-data`, JSON.stringify(courseData));
     console.log('Course data saved:', courseData.length, 'stages');
+    
+    // Обновляем URL с данными для синхронизации между устройствами
+    if (courseData.length > 0) {
+      updateURLWithData();
+    }
     
     // Create backup every time data changes
     if (courseData.length > 0) {
@@ -1249,6 +1289,31 @@ const MiniCourse = () => {
                               Восстановить
                             </Button>
                           </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-4 border border-purple-200 rounded-lg bg-purple-50">
+                          <div>
+                            <h4 className="font-medium text-purple-800">Поделиться курсом</h4>
+                            <p className="text-sm text-purple-600 mt-1">
+                              Получить ссылку для доступа с других устройств
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => {
+                              updateURLWithData();
+                              navigator.clipboard.writeText(window.location.href).then(() => {
+                                alert('Ссылка скопирована в буфер обмена! Теперь курс можно открыть на любом устройстве.');
+                              }).catch(() => {
+                                alert('Ссылка обновлена в адресной строке. Скопируйте её для доступа с других устройств.');
+                              });
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                          >
+                            <Icon name="Share2" size={16} className="mr-2" />
+                            Поделиться
+                          </Button>
                         </div>
                         
                         <div className="flex items-center justify-between p-4 border border-green-200 rounded-lg bg-green-50">
