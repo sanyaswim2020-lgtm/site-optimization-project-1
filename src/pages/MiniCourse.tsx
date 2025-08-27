@@ -149,39 +149,57 @@ const MiniCourse = () => {
 
   // Восстанавливаем blob URLs из base64 данных
   const restoreBlobURLs = (data: typeof courseData) => {
+    if (!data || !Array.isArray(data)) return [];
+    
     return data.map(stage => {
-      if (stage.type === 'video') {
+      if (stage && stage.type === 'video' && stage.videos) {
         const updatedVideos = stage.videos.map(video => {
-          if (video.base64Data && video.base64Data.startsWith('data:') && !video.url?.startsWith('blob:')) {
+          if (video && video.base64Data && video.base64Data.startsWith('data:') && !video.url?.startsWith('blob:')) {
             try {
               // Конвертируем base64 обратно в blob URL
-              const byteCharacters = atob(video.base64Data.split(',')[1]);
-              const byteNumbers = new Array(byteCharacters.length);
-              for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              const base64Parts = video.base64Data.split(',');
+              if (base64Parts.length > 1) {
+                const byteCharacters = atob(base64Parts[1]);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'video/mp4' });
+                return { ...video, url: URL.createObjectURL(blob) };
               }
-              const byteArray = new Uint8Array(byteNumbers);
-              const blob = new Blob([byteArray], { type: 'video/mp4' });
-              return { ...video, url: URL.createObjectURL(blob) };
             } catch (error) {
               console.error('Error restoring video from base64:', error);
-              return video;
             }
           }
-          return video;
+          return video || {};
         });
         return { ...stage, videos: updatedVideos };
       }
-      return stage;
+      return stage || {};
     });
   };
 
   // Функция для обновления URL с данными
   const updateURLWithData = () => {
-    if (courseData.length === 0) return;
+    if (!courseData || courseData.length === 0) return;
     
     try {
-      const encodedData = btoa(JSON.stringify(courseData));
+      // Создаем копию данных без blob URLs для сохранения
+      const dataForUrl = courseData.map(stage => {
+        if (stage.type === 'video') {
+          return {
+            ...stage,
+            videos: stage.videos.map(video => ({
+              ...video,
+              url: undefined // Убираем blob URLs из URL
+            }))
+          };
+        }
+        return stage;
+      });
+      
+      const encodedData = btoa(JSON.stringify(dataForUrl));
       const url = new URL(window.location.href);
       url.searchParams.set('data', encodedData);
       url.searchParams.set('stage', currentStage.toString());
@@ -196,23 +214,29 @@ const MiniCourse = () => {
     if (!courseId) return;
     localStorage.setItem(`minicourse-${courseId}-data`, JSON.stringify(courseData));
     console.log('Course data saved:', courseData.length, 'stages');
-    
-    // Обновляем URL с данными для синхронизации между устройствами
-    if (courseData.length > 0) {
+  }, [courseData, courseId]);
+
+  // Update URL with data separately (только когда есть реальные данные)
+  useEffect(() => {
+    if (!courseId || !courseData || courseData.length === 0) return;
+    // Добавляем небольшую задержку чтобы избежать гонки состояний
+    const timeoutId = setTimeout(() => {
       updateURLWithData();
-    }
-    
-    // Create backup every time data changes
-    if (courseData.length > 0) {
-      const backupData = {
-        courseData,
-        currentStage,
-        testAnswers,
-        timestamp: Date.now()
-      };
-      localStorage.setItem(`minicourse-${courseId}-backup`, JSON.stringify(backupData));
-      console.log('Backup created:', backupData);
-    }
+    }, 100);
+    return () => clearTimeout(timeoutId);
+  }, [courseData, currentStage, courseId]);
+
+  // Create backup separately
+  useEffect(() => {
+    if (!courseId || courseData.length === 0) return;
+    const backupData = {
+      courseData,
+      currentStage,
+      testAnswers,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(`minicourse-${courseId}-backup`, JSON.stringify(backupData));
+    console.log('Backup created:', backupData);
   }, [courseData, courseId, currentStage, testAnswers]);
 
   // Save current stage to localStorage whenever it changes
