@@ -209,26 +209,11 @@ const MiniCourse = () => {
     }
   };
 
-  // Save course data to localStorage whenever it changes
-  useEffect(() => {
+  // Убрали автоматическое сохранение - теперь сохраняем вручную в функциях создания/изменения
+
+  // Простая функция для создания бэкапа (вызывается вручную)
+  const createBackupData = () => {
     if (!courseId) return;
-    localStorage.setItem(`minicourse-${courseId}-data`, JSON.stringify(courseData));
-    console.log('Course data saved:', courseData.length, 'stages');
-  }, [courseData, courseId]);
-
-  // Update URL with data separately (только когда есть реальные данные)
-  useEffect(() => {
-    if (!courseId || !courseData || courseData.length === 0) return;
-    // Добавляем небольшую задержку чтобы избежать гонки состояний
-    const timeoutId = setTimeout(() => {
-      updateURLWithData();
-    }, 100);
-    return () => clearTimeout(timeoutId);
-  }, [courseData, currentStage, courseId]);
-
-  // Create backup separately
-  useEffect(() => {
-    if (!courseId || courseData.length === 0) return;
     const backupData = {
       courseData,
       currentStage,
@@ -237,7 +222,7 @@ const MiniCourse = () => {
     };
     localStorage.setItem(`minicourse-${courseId}-backup`, JSON.stringify(backupData));
     console.log('Backup created:', backupData);
-  }, [courseData, courseId, currentStage, testAnswers]);
+  };
 
   // Save current stage to localStorage whenever it changes
   useEffect(() => {
@@ -263,18 +248,7 @@ const MiniCourse = () => {
 
   // Не сохраняем ответы теста - пусть каждый раз проходят заново
 
-  // Backup and restore functions
-  const createBackup = () => {
-    if (!courseId) return;
-    const backupData = {
-      courseData,
-      currentStage,
-      testAnswers,
-      timestamp: Date.now()
-    };
-    localStorage.setItem(`minicourse-${courseId}-backup`, JSON.stringify(backupData));
-    console.log('Backup created:', backupData);
-  };
+  // Backup and restore functions - используем общую функцию createBackupData
 
   const restoreFromBackup = () => {
     if (!courseId) return;
@@ -364,7 +338,16 @@ const MiniCourse = () => {
         duration: newVideo.duration || '15 мин',
         videos: newVideo.videos.filter(v => v.title.trim() !== '')
       };
-      setCourseData([...courseData, newStage]);
+      
+      const updatedCourseData = [...courseData, newStage];
+      setCourseData(updatedCourseData);
+      
+      // Сохраняем в localStorage сразу
+      if (courseId) {
+        localStorage.setItem(`minicourse-${courseId}-data`, JSON.stringify(updatedCourseData));
+        createBackupData();
+      }
+      
       setNewVideo({ 
         title: '', 
         description: '', 
@@ -384,7 +367,16 @@ const MiniCourse = () => {
         title: newTest.title || 'Новый тест',
         questions: newTest.questions.filter(q => q.question.trim() !== '')
       };
-      setCourseData([...courseData, newStage]);
+      
+      const updatedCourseData = [...courseData, newStage];
+      setCourseData(updatedCourseData);
+      
+      // Сохраняем в localStorage сразу
+      if (courseId) {
+        localStorage.setItem(`minicourse-${courseId}-data`, JSON.stringify(updatedCourseData));
+        createBackupData();
+      }
+      
       setNewTest({
         title: '',
         questions: [{ question: '', options: ['', '', ''], correctAnswer: 0 }]
@@ -398,6 +390,12 @@ const MiniCourse = () => {
     
     const updatedCourseData = courseData.filter(stage => stage.id !== stageId);
     setCourseData(updatedCourseData);
+    
+    // Сохраняем в localStorage сразу
+    if (courseId) {
+      localStorage.setItem(`minicourse-${courseId}-data`, JSON.stringify(updatedCourseData));
+      createBackupData();
+    }
     
     // Если удаляем текущий этап или этап перед ним, нужно скорректировать текущий индекс
     if (stageIndex <= currentStage && updatedCourseData.length > 0) {
@@ -605,6 +603,13 @@ const MiniCourse = () => {
     }
     
     setCourseData(updatedCourseData);
+    
+    // Сохраняем в localStorage сразу
+    if (courseId) {
+      localStorage.setItem(`minicourse-${courseId}-data`, JSON.stringify(updatedCourseData));
+      createBackupData();
+    }
+    
     setEditingStageId(null);
   };
 
@@ -1289,7 +1294,7 @@ const MiniCourse = () => {
                           </div>
                           <div className="flex space-x-2">
                             <Button
-                              onClick={createBackup}
+                              onClick={createBackupData}
                               variant="outline"
                               size="sm"
                               className="border-blue-300 text-blue-700 hover:bg-blue-100"
