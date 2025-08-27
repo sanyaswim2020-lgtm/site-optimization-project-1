@@ -98,11 +98,10 @@ const MiniCourse = () => {
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Load data from URL parameters or localStorage on component mount
+  // Load data ONLY from URL parameters for cross-device synchronization
   useEffect(() => {
     if (!courseId) return;
     
-    // Сначала пытаемся загрузить из URL
     const urlParams = new URLSearchParams(window.location.search);
     const dataParam = urlParams.get('data');
     const stageParam = urlParams.get('stage');
@@ -114,28 +113,15 @@ const MiniCourse = () => {
         if (stageParam) {
           setCurrentStage(parseInt(stageParam));
         }
+        console.log('✅ Данные курса загружены из URL для синхронизации между устройствами');
         return;
       } catch (e) {
         console.error('Error loading data from URL:', e);
       }
     }
     
-    // Если в URL нет данных, пытаемся загрузить из localStorage
-    const savedCourseData = localStorage.getItem(`minicourse-${courseId}-data`);
-    const savedCurrentStage = localStorage.getItem(`minicourse-${courseId}-stage`);
-    
-    if (savedCourseData) {
-      try {
-        const parsedData = JSON.parse(savedCourseData);
-        setCourseData(parsedData);
-      } catch (e) {
-        console.error('Error loading course data:', e);
-      }
-    }
-    
-    if (savedCurrentStage) {
-      setCurrentStage(parseInt(savedCurrentStage));
-    }
+    // Если в URL нет данных - используем демо данные как отправную точку
+    console.log('ℹ️ Используются демо данные. Создайте свой контент для синхронизации между устройствами.');
   }, [courseId]);
 
   // Функция для обновления URL с данными
@@ -186,15 +172,15 @@ const MiniCourse = () => {
       testAnswers,
       timestamp: Date.now()
     };
-    localStorage.setItem(`minicourse-${courseId}-backup`, JSON.stringify(backupData));
+    // localStorage.setItem removed for URL-only synchronization
     console.log('Backup created:', backupData);
   };
 
-  // Save current stage to localStorage whenever it changes
-  useEffect(() => {
-    if (!courseId) return;
-    localStorage.setItem(`minicourse-${courseId}-stage`, currentStage.toString());
-  }, [currentStage, courseId]);
+  // Save current stage to localStorage whenever it changes - REMOVED for URL-only sync
+  // useEffect(() => {
+  //   if (!courseId) return;
+  //   localStorage.setItem(`minicourse-${courseId}-stage`, currentStage.toString());
+  // }, [currentStage, courseId]);
 
   // Force video reload when stage changes
 
@@ -266,9 +252,8 @@ const MiniCourse = () => {
       const updatedCourseData = [...courseData, newStage];
       setCourseData(updatedCourseData);
       
-      // Сохраняем в localStorage сразу
+      // localStorage.setItem removed for URL-only synchronization
       if (courseId) {
-        localStorage.setItem(`minicourse-${courseId}-data`, JSON.stringify(updatedCourseData));
         createBackupData();
       }
       
@@ -295,9 +280,8 @@ const MiniCourse = () => {
       const updatedCourseData = [...courseData, newStage];
       setCourseData(updatedCourseData);
       
-      // Сохраняем в localStorage сразу
+      // localStorage.setItem removed for URL-only synchronization
       if (courseId) {
-        localStorage.setItem(`minicourse-${courseId}-data`, JSON.stringify(updatedCourseData));
         createBackupData();
       }
       
@@ -315,9 +299,8 @@ const MiniCourse = () => {
     const updatedCourseData = courseData.filter(stage => stage.id !== stageId);
     setCourseData(updatedCourseData);
     
-    // Сохраняем в localStorage сразу
+    // localStorage.setItem removed for URL-only synchronization
     if (courseId) {
-      localStorage.setItem(`minicourse-${courseId}-data`, JSON.stringify(updatedCourseData));
       createBackupData();
     }
     
@@ -528,9 +511,8 @@ const MiniCourse = () => {
     
     setCourseData(updatedCourseData);
     
-    // Сохраняем в localStorage сразу
+    // localStorage.setItem removed for URL-only synchronization
     if (courseId) {
-      localStorage.setItem(`minicourse-${courseId}-data`, JSON.stringify(updatedCourseData));
       createBackupData();
     }
     
@@ -1263,6 +1245,19 @@ const MiniCourse = () => {
                           <Icon name="Trash2" size={16} className="mr-2" />
                           Очистить данные
                         </Button>
+                      </div>
+                      
+                      <div className="flex items-start space-x-4 p-4 border border-amber-200 rounded-lg bg-amber-50">
+                        <Icon name="Info" size={20} className="text-amber-600 mt-0.5" />
+                        <div>
+                          <h4 className="font-medium text-amber-800">Как работает синхронизация</h4>
+                          <ul className="text-sm text-amber-700 mt-1 space-y-1">
+                            <li>• Изменения автоматически сохраняются в URL</li>
+                            <li>• Нажмите "Поделиться" чтобы скопировать актуальную ссылку</li>
+                            <li>• Откройте ссылку на любом устройстве - увидите все изменения</li>
+                            <li>• Ссылка работает в любом браузере без регистрации</li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
